@@ -1,0 +1,84 @@
+// Admin Dashboard - Proxy server to forward API calls to visitors domain
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+const VISITORS_API = process.env.VISITORS_API_URL || 'https://hollyhubdigital.vercel.app';
+
+console.log(`⚙️ Admin Dashboard proxy initialized`);
+console.log(`📍 Forwarding API calls to: ${VISITORS_API}`);
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static admin files
+app.use(express.static(path.join(__dirname)));
+
+// ✅ Proxy all API requests to visitors domain
+app.use('/api', async (req, res) => {
+  try {
+    const path = req.path;
+    const url = `${VISITORS_API}/api${path}${req.url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+    
+    const options = {
+      method: req.method,
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Admin-Proxy/1.0'
+      }
+    };
+
+    // Forward authorization header if present
+    if (req.headers.authorization) {
+      options.headers.authorization = req.headers.authorization;
+    }
+
+    // Forward body for POST/PUT/PATCH
+    if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+      options.body = JSON.stringify(req.body);
+    }
+
+    console.log(`[PROXY] ${req.method} /api${path} → ${VISITORS_API}/api${path}`);
+
+    const response = await fetch(url, options);
+    const data = await response.json();
+
+    res.status(response.status);
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify(data));
+  } catch (error) {
+    console.error('❌ API Proxy Error:', error);
+    res.status(503).json({ 
+      error: 'Visitors API unavailable',
+      message: error.message 
+    });
+  }
+});
+
+// Serve admin.html for root and sub-routes (SPA)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin', 'admin.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin', 'admin.html'));
+});
+
+// Fallback to admin.html for any unmatched routes (SPA behavior)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin', 'admin.html'));
+});
+
+app.listen(PORT, () => {
+  console.log(`✅ Admin Dashboard running on port ${PORT}`);
+  console.log(`📗 Open: http://localhost:${PORT}/admin`);
+});
+
+app.use((err, req, res, next) => {
+  console.error('Server Error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
