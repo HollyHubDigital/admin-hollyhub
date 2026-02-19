@@ -26,8 +26,8 @@ app.get(['/admin.js','/admin/admin.js'], (req, res) => {
 // ✅ Proxy all API requests to visitors domain
 app.use('/api', async (req, res) => {
   try {
-    const path = req.path;
-    const url = `${VISITORS_API}/api${path}${req.url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+    const reqPath = req.path;
+    const url = `${VISITORS_API}/api${reqPath}${req.url.includes('?') ? '&' : '?'}t=${Date.now()}`;
     
     const options = {
       method: req.method,
@@ -47,14 +47,27 @@ app.use('/api', async (req, res) => {
       options.body = JSON.stringify(req.body);
     }
 
-    console.log(`[PROXY] ${req.method} /api${path} → ${VISITORS_API}/api${path}`);
+    console.log(`[PROXY] ${req.method} /api${reqPath} → ${VISITORS_API}/api${reqPath}`);
 
     const response = await fetch(url, options);
-    const data = await response.json();
+
+    // Try to parse JSON response; if it fails, capture text and wrap it
+    let body;
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      body = await response.json();
+    } else {
+      const text = await response.text();
+      try {
+        body = JSON.parse(text);
+      } catch (e) {
+        body = { message: text };
+      }
+    }
 
     res.status(response.status);
     res.setHeader('Content-Type', 'application/json');
-    res.send(JSON.stringify(data));
+    res.send(JSON.stringify(body));
   } catch (error) {
     console.error('❌ API Proxy Error:', error);
     res.status(503).json({ 
