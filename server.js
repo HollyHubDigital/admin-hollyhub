@@ -53,6 +53,8 @@ app.use('/api', async (req, res) => {
       } else {
         // stream the raw request to upstream
         options.body = req;
+        // undici/node fetch requires duplex when sending a stream body
+        options.duplex = 'half';
       }
     }
 
@@ -71,6 +73,13 @@ app.use('/api', async (req, res) => {
         body = JSON.parse(text);
       } catch (e) {
         body = { message: text };
+      }
+    }
+    // If upstream is failing due to read-only filesystem (common on serverless), surface a helpful message
+    if (response.status >= 500) {
+      const msg = (body && body.message) ? String(body.message) : '';
+      if (msg.toLowerCase().includes('read-only') || msg.includes('EROFS')) {
+        return res.status(503).json({ error: 'Visitors backend is read-only', message: 'The visitors service cannot write to disk in its current deployment. Deploy visitors as a persistent Node server or use remote storage.' });
       }
     }
 
