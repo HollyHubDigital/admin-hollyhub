@@ -31,20 +31,29 @@ app.use('/api', async (req, res) => {
     
     const options = {
       method: req.method,
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Admin-Proxy/1.0'
-      }
+      headers: {}
     };
 
-    // Forward authorization header if present
-    if (req.headers.authorization) {
-      options.headers.authorization = req.headers.authorization;
-    }
+    // Copy incoming headers (except host) so content-type and cookies are preserved
+    Object.keys(req.headers || {}).forEach(h => {
+      if (h.toLowerCase() === 'host') return;
+      options.headers[h] = req.headers[h];
+    });
 
-    // Forward body for POST/PUT/PATCH
+    // Ensure a sensible User-Agent
+    options.headers['user-agent'] = options.headers['user-agent'] || 'Admin-Proxy/1.0';
+
+    // Forward body:
+    // - For JSON requests, use the parsed body
+    // - For others (multipart/form-data, binary), stream the raw request
+    const incomingContentType = (req.headers['content-type'] || '');
     if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
-      options.body = JSON.stringify(req.body);
+      if (incomingContentType.includes('application/json')) {
+        options.body = JSON.stringify(req.body || {});
+      } else {
+        // stream the raw request to upstream
+        options.body = req;
+      }
     }
 
     console.log(`[PROXY] ${req.method} /api${reqPath} → ${VISITORS_API}/api${reqPath}`);
