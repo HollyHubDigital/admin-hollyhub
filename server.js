@@ -18,6 +18,11 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static admin files
 app.use(express.static(path.join(__dirname)));
 
+// Ensure admin JS and related static paths are served explicitly
+app.get(['/admin.js','/admin/admin.js'], (req, res) => {
+  return res.sendFile(path.join(__dirname, 'admin', 'admin.js'));
+});
+
 // ✅ Proxy all API requests to visitors domain
 app.use('/api', async (req, res) => {
   try {
