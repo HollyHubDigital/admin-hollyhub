@@ -1,3 +1,35 @@
+/* Global Styles copied from workspace styles.css */
+:root {
+  --primary-bg: #000000;
+  --primary-accent: #FF0000;
+  --secondary-accent: #4361EE;
+  --text-light: #FFFFFF;
+  --text-dark: #1a1a1a;
+  --border-color: #333333;
+  --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  --transition: all 0.3s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--primary-bg);
+  color: var(--text-light);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ... rest of styles trimmed for brevity; full file copied in workspace */
 /* Global Styles */
 :root {
   --primary-bg: #000000;
