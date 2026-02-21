@@ -37,6 +37,15 @@ app.get('/admin/:file', (req, res) => {
   });
 });
 
+// ✅ Serve adminlogin.html at root level (for login flow)
+app.get('/adminlogin.html', (req, res) => {
+  const filePath = path.join(__dirname, 'admin', 'adminlogin.html');
+  res.type('text/html; charset=UTF-8');
+  res.sendFile(filePath, (err) => {
+    if (err) res.status(404).send('Not found');
+  });
+});
+
 // Generic static files
 app.use(express.static(path.join(__dirname)));
 
@@ -114,10 +123,17 @@ app.use('/api', async (req, res) => {
 
 // Serve admin.html for root and sub-routes (SPA)
 app.get('/', (req, res) => {
+  res.type('text/html; charset=UTF-8');
   res.sendFile(path.join(__dirname, 'admin', 'admin.html'));
 });
 
 app.get('/admin', (req, res) => {
+  res.type('text/html; charset=UTF-8');
+  res.sendFile(path.join(__dirname, 'admin', 'admin.html'));
+});
+
+app.get('/admin.html', (req, res) => {
+  res.type('text/html; charset=UTF-8');
   res.sendFile(path.join(__dirname, 'admin', 'admin.html'));
 });
 
