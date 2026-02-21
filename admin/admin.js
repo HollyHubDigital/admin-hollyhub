@@ -3,6 +3,7 @@ if (typeof ADMIN_INITIALIZED !== 'undefined') {
   console.log('[Admin] Script already loaded, skipping re-initialization');
 } else {
   window.ADMIN_INITIALIZED = true;
+const API_BASE_URL = "https://hollyhubdigital.onrender.com";
   
 const API = {
   token() { return localStorage.getItem('adminToken') || ''; },
@@ -72,7 +73,7 @@ async function loadPageSections(){
   container.innerHTML = '<p style="opacity:0.8">Loading...</p>';
 
   try {
-    const r = await fetch(`/api/pages/sections/${page}`, { headers: API.headers() });
+    const r = await fetch(`${API_BASE_URL}/api/pages/sections/${page}`, { headers: API.headers() });
     if(!r.ok) throw new Error('Failed to load sections');
     const sections = await r.json();
 
@@ -125,7 +126,7 @@ async function loadPageSections(){
 
 async function savePageSections(payload){
   try {
-    const r = await fetch('/api/pages/sections/save', { method:'PUT', headers: API.headers(), body: JSON.stringify(payload) });
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/pages/sections/save', { method:'PUT', headers: API.headers(), body: JSON.stringify(payload) });
     if(!r.ok) throw new Error(await r.text());
     showToast('Page sections saved', 'View', ()=>window.open('/', '_blank'));
     document.getElementById('pageEditContainer').innerHTML = '<p style="color:var(--primary-accent)">✓ Changes saved!</p>';
@@ -175,7 +176,7 @@ async function publishPortfolio(){
     if(addToRecent){
       try{
         // fetch current sections
-        const sres = await fetch('/api/pages/sections/index', { headers: API.headers() });
+        const sres = await fetch('https://hollyhubdigital.onrender.com/api/pages/sections/index', { headers: API.headers() });
         const sections = sres.ok ? await sres.json() : {};
         sections.recentProjects = sections.recentProjects || [];
         // create project entry
@@ -203,14 +204,14 @@ async function uploadFile(file, targets){
   fd.append('file', file);
   if(targets && targets.length) fd.append('targets', targets.filter(Boolean).join(','));
   const headers = { 'Authorization': 'Bearer ' + API.token() };
-  const r = await fetch('/api/upload', { method: 'POST', headers, body: fd });
+  const r = await fetch('https://hollyhubdigital.onrender.com/api/upload', { method: 'POST', headers, body: fd });
   if(!r.ok) throw new Error(await r.text());
   return await r.json();
 }
 
 async function refreshPortfolioList(){
   try {
-    const r = await fetch('/api/portfolio', { headers: API.headers() });
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/portfolio', { headers: API.headers() });
     if(!r.ok) throw new Error('Failed');
     const items = await r.json();
     const container = document.getElementById('portfolioList');
@@ -237,7 +238,7 @@ async function refreshPortfolioList(){
 
 async function editPortfolioItem(id){
   try {
-    const r = await fetch('/api/portfolio?id='+encodeURIComponent(id), { headers: API.headers() });
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/portfolio?id='+encodeURIComponent(id), { headers: API.headers() });
     if(!r.ok) throw new Error('Not found');
     const item = await r.json();
     document.getElementById('pfTitle').value = item.title;
@@ -255,7 +256,7 @@ async function editPortfolioItem(id){
 async function deletePortfolioItem(id){
   if(!confirm('Delete this portfolio item?')) return;
   try {
-    const r = await fetch('/api/portfolio?id='+encodeURIComponent(id), { method:'DELETE', headers: API.headers() });
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/portfolio?id='+encodeURIComponent(id), { method:'DELETE', headers: API.headers() });
     if(!r.ok) throw new Error(await r.text());
     alert('Item deleted');
     await refreshPortfolioList();
@@ -303,7 +304,7 @@ async function publishBlog(){
 
 async function editBlogPost(id){
   try{
-    const r = await fetch('/api/blog');
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/blog');
     if(!r.ok) throw new Error('Failed to load posts');
     const posts = await r.json();
     const post = posts.find(p=>p.id===id);
@@ -319,7 +320,7 @@ async function editBlogPost(id){
 
 async function refreshBlogPosts(){
   try {
-    const r = await fetch('/api/blog', { headers: API.headers() });
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/blog', { headers: API.headers() });
     if(!r.ok) return;
     const posts = await r.json();
     const container = document.getElementById('publishedPosts');
@@ -347,7 +348,7 @@ async function refreshBlogPosts(){
 // ===== COMMENTS MODERATION =====
 async function refreshCommentsModeration(){
   try{
-    const r = await fetch('/api/blog/comments', { headers: API.headers() });
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/blog/comments', { headers: API.headers() });
     if(!r.ok) throw new Error('Failed to load comments');
     const comments = await r.json();
     const container = document.getElementById('commentsModeration');
@@ -362,7 +363,7 @@ async function refreshCommentsModeration(){
       const del = document.createElement('button'); del.className='btn-danger'; del.textContent='Delete';
       del.addEventListener('click', async ()=>{
         if(!confirm('Delete this comment?')) return;
-        try{ const dr = await fetch('/api/blog/comment?id='+encodeURIComponent(c.id), { method:'DELETE', headers: API.headers() }); if(!dr.ok) throw new Error(await dr.text()); showToast('Comment deleted'); await refreshCommentsModeration(); }catch(e){ alert('Delete failed: '+e.message); }
+        try{ const dr = await fetch('https://hollyhubdigital.onrender.com/api/blog/comment?id='+encodeURIComponent(c.id), { method:'DELETE', headers: API.headers() }); if(!dr.ok) throw new Error(await dr.text()); showToast('Comment deleted'); await refreshCommentsModeration(); }catch(e){ alert('Delete failed: '+e.message); }
       });
       btns.appendChild(del);
       div.appendChild(btns);
@@ -374,7 +375,7 @@ async function refreshCommentsModeration(){
 async function deleteBlogPost(id){
   if(!confirm('Delete this blog post?')) return;
   try {
-    const r = await fetch('/api/blog?id='+encodeURIComponent(id), { method:'DELETE', headers: API.headers() });
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/blog?id='+encodeURIComponent(id), { method:'DELETE', headers: API.headers() });
     if(!r.ok) throw new Error(await r.text());
     alert('Post deleted');
     await refreshBlogPosts();
@@ -396,7 +397,7 @@ async function updateAdminCredentials(){
 
   const payload = { currentPassword: currentPass, newUsername, newPassword };
   try {
-    const r = await fetch('/api/admin/update-credentials', { method:'POST', headers: API.headers(), body: JSON.stringify(payload) });
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/admin/update-credentials', { method:'POST', headers: API.headers(), body: JSON.stringify(payload) });
     if(!r.ok) throw new Error(await r.text());
     alert('Admin credentials updated. Please log in again.');
     localStorage.removeItem('adminToken');
@@ -422,7 +423,7 @@ async function saveSiteSettings(){
 
   const payload = { gaId, customScripts: scripts, whatsappNumber };
   try {
-    const r = await fetch('/api/settings', { method:'POST', headers: API.headers(), body: JSON.stringify(payload) });
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/settings', { method:'POST', headers: API.headers(), body: JSON.stringify(payload) });
     if(!r.ok) throw new Error(await r.text());
     alert('Settings saved');
   } catch(e) {
@@ -432,7 +433,7 @@ async function saveSiteSettings(){
 
 async function loadSiteSettings(){
   try{
-    const r = await fetch('/api/settings', { headers: API.headers() });
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/settings', { headers: API.headers() });
     if(!r.ok) throw new Error('Failed to load settings');
     const s = await r.json();
     if(document.getElementById('gaId')) document.getElementById('gaId').value = s.gaId || '';
@@ -448,7 +449,7 @@ let currentFilterCategory = 'all';
 
 async function loadAppsRegistry() {
   try {
-    const r = await fetch('/api/apps?registry=true');
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/apps?registry=true');
     if (!r.ok) throw new Error('Failed to load apps');
     const data = await r.json();
     allAppsRegistry = data.apps || {};
@@ -463,10 +464,10 @@ async function loadAppsRegistry() {
 
 async function loadAppsConfiguration() {
   try {
-    const r = await fetch('/api/apps?config=true', { headers: API.headers() });
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/apps?config=true', { headers: API.headers() });
     if (!r.ok) {
       // if auth failed or token invalid, try unauthenticated public config as a fallback
-      const publicRes = await fetch('/api/apps?config=true');
+      const publicRes = await fetch('https://hollyhubdigital.onrender.com/api/apps?config=true');
       if (!publicRes.ok) throw new Error('Failed to load config');
       currentAppsConfig = await publicRes.json();
       return;
@@ -476,7 +477,7 @@ async function loadAppsConfiguration() {
     console.error('Load config error:', e);
     // attempt public fallback so admin UI still shows active apps even when token is invalid
     try{
-      const r2 = await fetch('/api/apps?config=true');
+      const r2 = await fetch('https://hollyhubdigital.onrender.com/api/apps?config=true');
       if (r2.ok) currentAppsConfig = await r2.json();
     }catch(e2){ console.error('Public config fallback failed', e2); }
   }
@@ -617,7 +618,7 @@ async function saveAppConfig(appId) {
   });
   
   try {
-    const r = await fetch('/api/apps', {
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/apps', {
       method: 'PUT',
       headers: API.headers(),
       body: JSON.stringify({
@@ -643,7 +644,7 @@ async function disableApp(appId) {
   if (!confirm('Disable this app?')) return;
   
   try {
-    const r = await fetch('/api/apps', {
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/apps', {
       method: 'PUT',
       headers: API.headers(),
       body: JSON.stringify({
@@ -677,7 +678,7 @@ function attachAppFilterEvents() {
 // ===== ANALYTICS =====
 async function loadAnalytics(){
   try {
-    const r = await fetch('/api/analytics', { headers: API.headers() });
+    const r = await fetch('https://hollyhubdigital.onrender.com/api/analytics', { headers: API.headers() });
     if(!r.ok) throw new Error('Failed');
     const data = await r.json();
 
