@@ -25,10 +25,12 @@
   </div>
 
   <script>
+    const API_BASE_URL = "https://hollyhubdigital.onrender.com";
+    
     document.getElementById('loginBtn').addEventListener('click', async function(){
       const user = document.getElementById('username').value;
       const pass = document.getElementById('password').value;
-      const res = await fetch('/api/admin/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:user,password:pass}) });
+      const res = await fetch(`${API_BASE_URL}/api/admin/login`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:user,password:pass}) });
       if(res.ok){ const j=await res.json(); localStorage.setItem('adminToken', j.token); window.location.href = 'admin.html'; }
       else { const txt = await res.text(); document.getElementById('loginMsg').textContent = 'Login failed: ' + txt; }
     });
@@ -60,7 +62,7 @@
         document.getElementById('forgotMsg').textContent = 'Sending...';
         try{
           const payload = (v.indexOf('@')!==-1) ? { email: v } : { username: v };
-          const r = await fetch('/api/admin/reset-request', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+          const r = await fetch(`${API_BASE_URL}/api/admin/reset-request`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
           const j = await r.json();
           if(!r.ok) return document.getElementById('forgotMsg').textContent = (j && j.error) ? j.error : 'Request failed';
           if(j.resetToken){

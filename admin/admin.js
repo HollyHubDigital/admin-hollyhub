@@ -433,6 +433,11 @@ async function saveSiteSettings(){
 
 async function loadSiteSettings(){
   try{
+    const token = API.token();
+    if(!token){
+      console.warn('loadSiteSettings: No token available, skipping');
+      return;
+    }
     const r = await fetch('https://hollyhubdigital.onrender.com/api/settings', { headers: API.headers() });
     if(!r.ok) throw new Error('Failed to load settings');
     const s = await r.json();
@@ -450,7 +455,10 @@ let currentFilterCategory = 'all';
 async function loadAppsRegistry() {
   try {
     const r = await fetch('https://hollyhubdigital.onrender.com/api/apps?registry=true');
-    if (!r.ok) throw new Error('Failed to load apps');
+    if (!r.ok) {
+      console.warn('Load apps registry: HTTP ' + r.status);
+      return;
+    }
     const data = await r.json();
     allAppsRegistry = data.apps || {};
     await loadAppsConfiguration();
@@ -458,7 +466,7 @@ async function loadAppsRegistry() {
     updateActiveAppsList();
   } catch(e) {
     console.error('Load apps error:', e);
-    showToast('Failed to load apps: ' + e.message, null, null, 6000);
+    // Silently fail - apps management is optional
   }
 }
 
@@ -775,6 +783,6 @@ window.addEventListener('load', async ()=>{
   refreshPortfolioList();
   refreshBlogPosts();
   await loadSiteSettings();
-  loadAppsRegistry();
+  await loadAppsRegistry();
 });
 } // End of ADMIN_INITIALIZED guard
