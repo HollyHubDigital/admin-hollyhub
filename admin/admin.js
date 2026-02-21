@@ -1,4 +1,8 @@
 // Admin Dashboard - COMPLETE VERSION
+if (typeof ADMIN_INITIALIZED !== 'undefined') {
+  console.log('[Admin] Script already loaded, skipping re-initialization');
+} else {
+  window.ADMIN_INITIALIZED = true;
 const API = {
   token() { return localStorage.getItem('adminToken') || ''; },
   headers(json=true){ return { 'Authorization': 'Bearer ' + API.token(), ...(json? {'Content-Type':'application/json'}:{}) }; }
@@ -932,3 +936,4 @@ window.addEventListener('load', async ()=>{
   await loadSiteSettings();
   loadAppsRegistry();
 });
+} // End of ADMIN_INITIALIZED guard
