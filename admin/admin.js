@@ -48,7 +48,10 @@ function showToast(message, actionLabel, actionFn, timeout=5000){
 }
 
 function requireAuth() {
-  if(!API.token()) { window.location.href = 'adminlogin.html'; }
+  if(!API.token()) { 
+    window.location.href = 'adminlogin.html';
+    throw new Error('Redirecting to login');
+  }
 }
 
 // ===== TAB SWITCHING =====
