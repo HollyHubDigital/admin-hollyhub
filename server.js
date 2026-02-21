@@ -15,12 +15,29 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static admin files
+// Serve static files explicitly with proper MIME types
 app.use(express.static(path.join(__dirname)));
 
-// Ensure admin JS and related static paths are served explicitly
-app.get(['/admin.js','/admin/admin.js'], (req, res) => {
-  return res.sendFile(path.join(__dirname, 'admin', 'admin.js'));
+// Explicit CSS handler to ensure correct MIME type
+app.get(/\.css$/, (req, res) => {
+  const filePath = path.join(__dirname, req.path);
+  try {
+    res.setHeader('Content-Type', 'text/css; charset=UTF-8');
+    res.sendFile(filePath);
+  } catch(e) {
+    res.status(404).send('Not found');
+  }
+});
+
+// Explicit JS handler
+app.get(/\.js$/, (req, res) => {
+  const filePath = path.join(__dirname, req.path);
+  try {
+    res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+    res.sendFile(filePath);
+  } catch(e) {
+    res.status(404).send('Not found');
+  }
 });
 
 // ✅ Proxy all API requests to visitors domain
@@ -104,8 +121,12 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin', 'admin.html'));
 });
 
-// Fallback to admin.html for any unmatched routes (SPA behavior)
+// Fallback to admin.html for any unmatched routes WITHOUT file extensions (SPA behavior)
 app.get('*', (req, res) => {
+  // Don't intercept requests with file extensions - let express.static handle them
+  if (req.path.includes('.')) {
+    return res.status(404).send('Not found');
+  }
   res.sendFile(path.join(__dirname, 'admin', 'admin.html'));
 });
 
