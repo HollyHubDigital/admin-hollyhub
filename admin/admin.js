@@ -94,11 +94,11 @@ async function loadPageSections(){
           <textarea id="recentProjects" class="form-input" placeholder="JSON array of project cards">${JSON.stringify(sections.recentProjects || [], null, 2)}</textarea>
         </div>
       `;
-      // inject preview iframe area
+      // inject preview iframe area pointing to visitors site
       setTimeout(()=>{
         const preview = document.getElementById('pagePreviewArea');
         if(preview){
-          preview.innerHTML = '<iframe id="pagePreviewFrame" src="/" style="width:100%;height:420px;border:1px solid rgba(255,255,255,0.06);border-radius:8px"></iframe>';
+          preview.innerHTML = `<iframe id="pagePreviewFrame" src="${API_BASE_URL}/" style="width:100%;height:420px;border:1px solid rgba(255,255,255,0.06);border-radius:8px"></iframe>`;
         }
       }, 50);
     } else if(page === 'portfolio'){
@@ -131,10 +131,10 @@ async function savePageSections(payload){
   try {
     const r = await fetch('https://hollyhubdigital.onrender.com/api/pages/sections/save', { method:'PUT', headers: API.headers(), body: JSON.stringify(payload) });
     if(!r.ok) throw new Error(await r.text());
-    showToast('Page sections saved', 'View', ()=>window.open('/', '_blank'));
+    showToast('Page sections saved', 'View', ()=>window.open(API_BASE_URL + '/', '_blank'));
     document.getElementById('pageEditContainer').innerHTML = '<p style="color:var(--primary-accent)">✓ Changes saved!</p>';
     // refresh preview iframe if present
-    try{ const f = document.getElementById('pagePreviewFrame'); if(f && f.contentWindow) f.contentWindow.location.reload(); }catch(e){}
+    try{ const f = document.getElementById('pagePreviewFrame'); if(f && f.contentWindow && f.contentWindow.location) f.contentWindow.location.reload(); }catch(e){}
   } catch(e) {
     showToast('Save failed: '+e.message, null, null, 6000);
   }
@@ -171,7 +171,7 @@ async function publishPortfolio(){
     }
     // prefer uploaded filename if available
     if(uploadedMeta && uploadedMeta.filename){ payload.image = uploadedMeta.filename; }
-    const r = await fetch(endpoint, { method, headers: API.headers(), body: JSON.stringify(payload) });
+    const r = await fetch(API_BASE_URL + endpoint, { method, headers: API.headers(), body: JSON.stringify(payload) });
     if(!r.ok) throw new Error(await r.text());
     const createdItem = await r.json();
     showToast(editingId ? 'Portfolio item updated' : 'Portfolio item published', 'Open', ()=>window.open('/portfolio.html','_blank'));
@@ -290,7 +290,7 @@ async function publishBlog(){
     let endpoint = '/api/blog';
     let method = 'POST';
     if(editingId){ endpoint += '?id='+encodeURIComponent(editingId); method = 'PUT'; }
-    const r = await fetch(endpoint, { method, headers: API.headers(), body: JSON.stringify(payload) });
+    const r = await fetch(API_BASE_URL + endpoint, { method, headers: API.headers(), body: JSON.stringify(payload) });
     if(!r.ok) throw new Error(await r.text());
     const post = await r.json();
     showToast(editingId? 'Blog post updated' : 'Blog post published', 'Open', ()=>window.open('/blog.html','_blank'));
