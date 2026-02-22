@@ -788,4 +788,14 @@ window.addEventListener('load', async ()=>{
   await loadSiteSettings();
   await loadAppsRegistry();
 });
+// Expose functions used by inline onclick handlers in admin HTML
+try{
+  window.editBlogPost = editBlogPost;
+  window.deleteBlogPost = deleteBlogPost;
+  window.editPortfolioItem = editPortfolioItem;
+  window.deletePortfolioItem = deletePortfolioItem;
+  window.openAppConfigModal = openAppConfigModal;
+  window.closeAppModal = closeAppModal;
+}catch(e){}
+
 } // End of ADMIN_INITIALIZED guard
