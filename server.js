@@ -6,7 +6,7 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const VISITORS_API = process.env.VISITORS_API_URL || 'https://hollyhubdigital.vercel.app';
+const VISITORS_API = process.env.VISITORS_API_URL || 'https://hollyhubdigitals.vercel.app';
 
 console.log(`⚙️ Admin Dashboard proxy initialized`);
 console.log(`📍 Forwarding API calls to: ${VISITORS_API}`);
