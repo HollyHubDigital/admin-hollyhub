@@ -3,7 +3,7 @@ if (typeof ADMIN_INITIALIZED !== 'undefined') {
   console.log('[Admin] Script already loaded, skipping re-initialization');
 } else {
   window.ADMIN_INITIALIZED = true;
-const API_BASE_URL = (typeof window !== 'undefined' && window.API_BASE_URL) ? window.API_BASE_URL : 'https://hollyhubdigital.onrender.com';
+const API_BASE_URL = (typeof window !== 'undefined' && window.API_BASE_URL) ? window.API_BASE_URL : 'https://hollyhubdigitals.vercel.app';
   
 const API = {
   token() { return localStorage.getItem('adminToken') || ''; },
