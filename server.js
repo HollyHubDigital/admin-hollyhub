@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -121,20 +122,40 @@ app.use('/api', async (req, res) => {
   }
 });
 
+// ✅ Serve admin.html with injected API_BASE_URL pointing to hollyhubdigitals.vercel.app
+let adminHtmlCache = null;
+
+function getAdminHtmlWithCorrectUrl() {
+  if (!adminHtmlCache) {
+    let html = fs.readFileSync(path.join(__dirname, 'admin', 'admin.html'), 'utf8');
+    // Replace hardcoded API_BASE_URL with the correct visitors API URL on separate Vercel account
+    html = html.replace(
+      /window\.API_BASE_URL\s*=\s*["']https?:\/\/[^"']+["']/g,
+      'window.API_BASE_URL = "https://hollyhubdigitals.vercel.app"'
+    );
+    html = html.replace(
+      /const\s+API_BASE_URL\s*=\s*["']https?:\/\/[^"']+["']/g,
+      'const API_BASE_URL = "https://hollyhubdigitals.vercel.app"'
+    );
+    adminHtmlCache = html;
+  }
+  return adminHtmlCache;
+}
+
 // Serve admin.html for root and sub-routes (SPA)
 app.get('/', (req, res) => {
   res.type('text/html; charset=UTF-8');
-  res.sendFile(path.join(__dirname, 'admin', 'admin.html'));
+  res.send(getAdminHtmlWithCorrectUrl());
 });
 
 app.get('/admin', (req, res) => {
   res.type('text/html; charset=UTF-8');
-  res.sendFile(path.join(__dirname, 'admin', 'admin.html'));
+  res.send(getAdminHtmlWithCorrectUrl());
 });
 
 app.get('/admin.html', (req, res) => {
   res.type('text/html; charset=UTF-8');
-  res.sendFile(path.join(__dirname, 'admin', 'admin.html'));
+  res.send(getAdminHtmlWithCorrectUrl());
 });
 
 // Fallback to admin.html for any unmatched routes WITHOUT file extensions (SPA behavior)
@@ -143,7 +164,8 @@ app.get('*', (req, res) => {
   if (req.path.includes('.')) {
     return res.status(404).send('Not found');
   }
-  res.sendFile(path.join(__dirname, 'admin', 'admin.html'));
+  res.type('text/html; charset=UTF-8');
+  res.send(getAdminHtmlWithCorrectUrl());
 });
 
 app.listen(PORT, () => {
