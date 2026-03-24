@@ -227,10 +227,18 @@ async function uploadFile(file, targets){
 async function refreshPortfolioList(){
   try {
     const r = await fetch(API.buildURL('/api/portfolio'), { headers: API.headers() });
-    if(!r.ok) throw new Error('Failed');
+    if(!r.ok) {
+      console.error('Portfolio fetch failed:', r.status, r.statusText);
+      throw new Error(`Failed to load portfolio (${r.status})`);
+    }
     const items = await r.json();
     const container = document.getElementById('portfolioList');
+    if (!container) return;
     container.innerHTML = '';
+    if (!items || items.length === 0) {
+      container.innerHTML = '<p style="opacity:0.6">No portfolio items yet. Create one above.</p>';
+      return;
+    }
     items.forEach(item=>{
       const div = document.createElement('div');
       div.className = 'portfolio-item';
@@ -247,7 +255,11 @@ async function refreshPortfolioList(){
       container.appendChild(div);
     });
   } catch(e) {
-    console.error(e);
+    console.error('refreshPortfolioList error:', e);
+    const container = document.getElementById('portfolioList');
+    if (container) {
+      container.innerHTML = `<p style="color:#ff6b6b">Error: ${e.message}</p>`;
+    }
   }
 }
 
@@ -336,10 +348,18 @@ async function editBlogPost(id){
 async function refreshBlogPosts(){
   try {
     const r = await fetch(API.buildURL('/api/blog'), { headers: API.headers() });
-    if(!r.ok) return;
+    if(!r.ok) {
+      console.error('Blog fetch failed:', r.status, r.statusText);
+      throw new Error(`Failed to load blog posts (${r.status})`);
+    }
     const posts = await r.json();
     const container = document.getElementById('publishedPosts');
+    if (!container) return;
     container.innerHTML = '';
+    if (!posts || posts.length === 0) {
+      container.innerHTML = '<p style="opacity:0.6">No blog posts yet. Create one above.</p>';
+      return;
+    }
     posts.forEach(post=>{
       const div = document.createElement('div');
       div.className = 'blog-item';
@@ -356,7 +376,11 @@ async function refreshBlogPosts(){
       container.appendChild(div);
     });
   } catch(e) {
-    console.error(e);
+    console.error('refreshBlogPosts error:', e);
+    const container = document.getElementById('publishedPosts');
+    if (container) {
+      container.innerHTML = `<p style="color:#ff6b6b">Error: ${e.message}</p>`;
+    }
   }
 }
 
@@ -364,11 +388,12 @@ async function refreshBlogPosts(){
 async function refreshCommentsModeration(){
   try{
     const r = await fetch(API.buildURL('/api/blog/comments'), { headers: API.headers() });
-    if(!r.ok) throw new Error('Failed to load comments');
+    if(!r.ok) throw new Error(`Failed to load comments (${r.status})`);
     const comments = await r.json();
     const container = document.getElementById('commentsModeration');
+    if (!container) return;
     container.innerHTML = '';
-    if(comments.length===0){ container.innerHTML = '<p style="opacity:0.8">No comments yet</p>'; return; }
+    if(!comments || comments.length===0){ container.innerHTML = '<p style="opacity:0.8">No comments yet</p>'; return; }
     comments.slice().reverse().forEach(c=>{
       const div = document.createElement('div');
       div.style.display = 'flex'; div.style.justifyContent = 'space-between'; div.style.alignItems = 'center';
@@ -384,7 +409,13 @@ async function refreshCommentsModeration(){
       div.appendChild(btns);
       container.appendChild(div);
     });
-  }catch(e){ console.error(e); }
+  }catch(e){ 
+    console.error('refreshCommentsModeration error:', e);
+    const container = document.getElementById('commentsModeration');
+    if (container) {
+      container.innerHTML = `<p style="color:#ff6b6b">Error: ${e.message}</p>`;
+    }
+  }
 }
 
 async function deleteBlogPost(id){

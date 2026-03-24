@@ -111,6 +111,22 @@
   
   <script src="./admin.js"></script>
   <script>
+    // Check authentication first
+    function checkAuth() {
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+      if (!token) {
+        window.location.href = 'adminlogin.html';
+        return false;
+      }
+      return true;
+    }
+    
+    // Verify auth before initializing
+    if (!checkAuth()) {
+      // Auth check will redirect, stop script execution
+      throw new Error('Not authenticated');
+    }
+    
     // Initialize logout button
     document.getElementById('logoutBtn').addEventListener('click', () => {
       localStorage.removeItem('adminToken');
