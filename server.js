@@ -128,15 +128,8 @@ let adminHtmlCache = null;
 function getAdminHtmlWithCorrectUrl() {
   if (!adminHtmlCache) {
     let html = fs.readFileSync(path.join(__dirname, 'admin', 'admin.html'), 'utf8');
-    // Replace hardcoded API_BASE_URL with the correct visitors API URL on separate Vercel account
-    html = html.replace(
-      /window\.API_BASE_URL\s*=\s*["']https?:\/\/[^"']+["']/g,
-      'window.API_BASE_URL = "https://hollyhubdigitals.vercel.app"'
-    );
-    html = html.replace(
-      /const\s+API_BASE_URL\s*=\s*["']https?:\/\/[^"']+["']/g,
-      'const API_BASE_URL = "https://hollyhubdigitals.vercel.app"'
-    );
+    // NOTE: The admin.html now has dynamic API_BASE_URL configuration that detects
+    // localhost vs production. We do NOT override it here to preserve the logic.
     adminHtmlCache = html;
   }
   return adminHtmlCache;
