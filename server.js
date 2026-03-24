@@ -135,6 +135,18 @@ function getAdminHtmlWithCorrectUrl() {
   return adminHtmlCache;
 }
 
+// ✅ Explicitly serve admin.js
+app.get('/admin.js', (req, res) => {
+  const filePath = path.join(__dirname, 'admin.js');
+  res.type('application/javascript; charset=UTF-8');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('❌ admin.js not found:', filePath);
+      res.status(404).send('Not found');
+    }
+  });
+});
+
 // Serve admin.html for root and sub-routes (SPA)
 app.get('/', (req, res) => {
   res.type('text/html; charset=UTF-8');
