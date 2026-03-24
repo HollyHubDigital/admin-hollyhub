@@ -354,7 +354,7 @@ async function publishBlog(){
 
 async function editBlogPost(id){
   try{
-    const r = await fetch(API.buildURL('/api/blog'));
+    const r = await fetch(API.buildURL('/api/blog'), { headers: API.headers() });
     if(!r.ok) throw new Error('Failed to load posts');
     const posts = await r.json();
     const post = posts.find(p=>p.id===id);
