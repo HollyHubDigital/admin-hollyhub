@@ -12,6 +12,7 @@ const API = {
     return base + path;
   },
   token() { return localStorage.getItem('adminToken') || ''; },
+  visitorsURL() { return (typeof window.VISITORS_BASE_URL === 'string' && window.VISITORS_BASE_URL) ? window.VISITORS_BASE_URL : 'https://hollyhub-visitors.vercel.app'; },
   headers(json=true){ 
     const headers = {};
     const token = API.token();
@@ -121,7 +122,8 @@ async function loadPageSections(){
       setTimeout(()=>{
         const preview = document.getElementById('pagePreviewArea');
         if(preview){
-          preview.innerHTML = '<iframe id="pagePreviewFrame" src="/" style="width:100%;height:420px;border:1px solid rgba(255,255,255,0.06);border-radius:8px"></iframe>';
+          const visitorsUrl = API.visitorsURL();
+          preview.innerHTML = `<iframe id="pagePreviewFrame" src="${visitorsUrl}/" style="width:100%;height:420px;border:1px solid rgba(255,255,255,0.06);border-radius:8px"></iframe>`;
         }
       }, 50);
     } else if(page === 'portfolio'){
