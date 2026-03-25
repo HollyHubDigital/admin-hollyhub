@@ -12,7 +12,7 @@ const API = {
     return base + path;
   },
   token() { return localStorage.getItem('adminToken') || ''; },
-  visitorsURL() { return (typeof window.VISITORS_BASE_URL === 'string' && window.VISITORS_BASE_URL) ? window.VISITORS_BASE_URL : 'https://hollyhub-visitors.vercel.app'; },
+  visitorsURL() { return (typeof window.VISITORS_BASE_URL === 'string' && window.VISITORS_BASE_URL) ? window.VISITORS_BASE_URL : 'https://hollyhubdigitals.vercel.app'; },
   headers(json=true){ 
     const headers = {};
     const token = API.token();
