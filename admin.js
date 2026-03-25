@@ -15,7 +15,13 @@ const API = {
   headers(json=true){ 
     const headers = {};
     const token = API.token();
-    if(token) headers['Authorization'] = 'Bearer ' + token;
+    console.log('[API.headers] Building headers... token present:', !!token);
+    if(token) {
+      headers['Authorization'] = 'Bearer ' + token;
+      console.log('[API.headers] Authorization header set, length:', headers['Authorization'].length);
+    } else {
+      console.warn('[API.headers] No token available');
+    }
     if(json) headers['Content-Type'] = 'application/json';
     return headers;
   }
@@ -59,7 +65,16 @@ function showToast(message, actionLabel, actionFn, timeout=5000){
 }
 
 function requireAuth() {
-  if(!API.token()) { window.location.href = 'adminlogin.html'; }
+  const token = API.token();
+  console.log('[requireAuth] Checking authentication...');
+  console.log('[requireAuth] Token present:', !!token);
+  if(token) {
+    console.log('[requireAuth] Token length:', token.length);
+    console.log('[requireAuth] Token preview:', token.substring(0, 30) + '...');
+  } else {
+    console.warn('[requireAuth] No token found, redirecting to login');
+  }
+  if(!token) { window.location.href = 'adminlogin.html'; }
 }
 
 // ===== TAB SWITCHING =====
@@ -179,8 +194,26 @@ async function publishPortfolio(){
     }
     // prefer uploaded filename if available
     if(uploadedMeta && uploadedMeta.filename){ payload.image = uploadedMeta.filename; }
-    const r = await fetch(endpoint, { method, headers: API.headers(), body: JSON.stringify(payload) });
-    if(!r.ok) throw new Error(await r.text());
+    
+    const token = API.token();
+    const headers = API.headers();
+    const fullUrl = API.buildURL(endpoint);
+    console.log('[publishPortfolio] ===== PORTFOLIO PUBLISH START =====');
+    console.log('[publishPortfolio] Endpoint:', endpoint);
+    console.log('[publishPortfolio] Full URL:', fullUrl);
+    console.log('[publishPortfolio] Method:', method);
+    console.log('[publishPortfolio] Token present:', !!token);
+    console.log('[publishPortfolio] Token length:', token ? token.length : 0);
+    console.log('[publishPortfolio] Token starts with:', token ? token.substring(0, 30) + '...' : 'EMPTY');
+    console.log('[publishPortfolio] Headers object:', headers);
+    console.log('[publishPortfolio] Authorization header value:', headers.Authorization);
+    
+    const r = await fetch(fullUrl, { method, headers, body: JSON.stringify(payload) });
+    if(!r.ok) {
+      const errText = await r.text();
+      console.error('[publishPortfolio] Request failed - Status:', r.status, '| Response:', errText);
+      throw new Error(`Server error (${r.status}): ${errText}`);
+    }
     const createdItem = await r.json();
     showToast(editingId ? 'Portfolio item updated' : 'Portfolio item published', 'Open', ()=>window.open('/portfolio.html','_blank'));
     // Optionally add to recentProjects on home page
@@ -213,6 +246,8 @@ async function publishPortfolio(){
 async function uploadFile(file, targets){
   const token = API.token();
   console.log('[uploadFile] Token status:', token ? 'Present' : 'Missing');
+  console.log('[uploadFile] Token length:', token ? token.length : 0);
+  console.log('[uploadFile] Token preview:', token ? token.substring(0, 20) + '...' : 'NONE');
   console.log('[uploadFile] API Base URL:', API.baseURL());
   
   if(!token) {
@@ -226,7 +261,8 @@ async function uploadFile(file, targets){
   const headers = { 'Authorization': 'Bearer ' + token };
   const uploadUrl = API.buildURL('/api/upload');
   console.log('[uploadFile] Uploading to:', uploadUrl);
-  console.log('[uploadFile] Headers:', { Authorization: headers.Authorization ? 'SET' : 'MISSING' });
+  console.log('[uploadFile] Authorization header:', headers.Authorization);
+  console.log('[uploadFile] Full header object:', headers);
   
   const r = await fetch(uploadUrl, { method: 'POST', headers, body: fd });
   
@@ -271,11 +307,19 @@ async function refreshPortfolioList(){
           <div style="opacity:0.8;font-size:0.9rem">${item.category} • ${new Date(item.createdAt).toLocaleDateString()}</div>
         </div>
         <div style="display:flex;gap:6px">
-          <button class="btn-secondary" onclick="editPortfolioItem('${item.id}')">Edit</button>
-          <button class="btn-danger" onclick="deletePortfolioItem('${item.id}')">Delete</button>
+          <button class="btn-secondary" data-action="edit-portfolio" data-id="${item.id}">Edit</button>
+          <button class="btn-danger" data-action="delete-portfolio" data-id="${item.id}">Delete</button>
         </div>
       `;
       container.appendChild(div);
+    });
+    
+    // Attach event listeners for edit/delete buttons
+    container.querySelectorAll('[data-action="edit-portfolio"]').forEach(btn => {
+      btn.addEventListener('click', (e) => editPortfolioItem(e.target.dataset.id));
+    });
+    container.querySelectorAll('[data-action="delete-portfolio"]').forEach(btn => {
+      btn.addEventListener('click', (e) => deletePortfolioItem(e.target.dataset.id));
     });
   } catch(e) {
     console.error('[portfolio] Error:', e);
@@ -337,8 +381,26 @@ async function publishBlog(){
     let endpoint = '/api/blog';
     let method = 'POST';
     if(editingId){ endpoint += '?id='+encodeURIComponent(editingId); method = 'PUT'; }
-    const r = await fetch(API.buildURL(endpoint), { method, headers: API.headers(), body: JSON.stringify(payload) });
-    if(!r.ok) throw new Error(await r.text());
+    
+    const token = API.token();
+    const headers = API.headers();
+    const fullUrl = API.buildURL(endpoint);
+    console.log('[publishBlog] ===== BLOG PUBLISH START =====');
+    console.log('[publishBlog] Endpoint:', endpoint);
+    console.log('[publishBlog] Full URL:', fullUrl);
+    console.log('[publishBlog] Method:', method);
+    console.log('[publishBlog] Token present:', !!token);
+    console.log('[publishBlog] Token length:', token ? token.length : 0);
+    console.log('[publishBlog] Token starts with:', token ? token.substring(0, 30) + '...' : 'EMPTY');
+    console.log('[publishBlog] Headers object:', headers);
+    console.log('[publishBlog] Authorization header value:', headers.Authorization);
+    
+    const r = await fetch(fullUrl, { method, headers, body: JSON.stringify(payload) });
+    if(!r.ok) {
+      const errText = await r.text();
+      console.error('[publishBlog] Request failed - Status:', r.status, '| Response:', errText);
+      throw new Error(`Server error (${r.status}): ${errText}`);
+    }
     const post = await r.json();
     showToast(editingId? 'Blog post updated' : 'Blog post published', 'Open', ()=>window.open('/blog.html','_blank'));
     document.getElementById('blogTitle').value = '';
@@ -400,11 +462,19 @@ async function refreshBlogPosts(){
           <div style="opacity:0.8">${post.category} • ${new Date(post.createdAt).toLocaleDateString()}</div>
         </div>
         <div style="display:flex;gap:6px">
-          <button class="btn-secondary" onclick="editBlogPost('${post.id}')">Edit</button>
-          <button class="btn-danger" onclick="deleteBlogPost('${post.id}')">Delete</button>
+          <button class="btn-secondary" data-action="edit-blog" data-id="${post.id}">Edit</button>
+          <button class="btn-danger" data-action="delete-blog" data-id="${post.id}">Delete</button>
         </div>
       `;
       container.appendChild(div);
+    });
+    
+    // Attach event listeners for edit/delete buttons
+    container.querySelectorAll('[data-action="edit-blog"]').forEach(btn => {
+      btn.addEventListener('click', (e) => editBlogPost(e.target.dataset.id));
+    });
+    container.querySelectorAll('[data-action="delete-blog"]').forEach(btn => {
+      btn.addEventListener('click', (e) => deleteBlogPost(e.target.dataset.id));
     });
   } catch(e) {
     console.error('[blog] Error:', e);
@@ -847,6 +917,23 @@ function attachEvents(){
     });
   }
 }
+
+// Expose functions globally for onclick handlers
+window.editPortfolioItem = editPortfolioItem;
+window.deletePortfolioItem = deletePortfolioItem;
+window.editBlogPost = editBlogPost;
+window.deleteBlogPost = deleteBlogPost;
+window.publishPortfolio = publishPortfolio;
+window.publishBlog = publishBlog;
+window.uploadFile = uploadFile;
+window.loadPageSections = loadPageSections;
+window.savePageSections = savePageSections;
+window.updateAdminCredentials = updateAdminCredentials;
+window.saveSiteSettings = saveSiteSettings;
+window.openAppConfigModal = openAppConfigModal;
+window.closeAppModal = closeAppModal;
+window.saveAppConfig = saveAppConfig;
+window.disableApp = disableApp;
 
 window.addEventListener('load', async ()=>{
   try{
