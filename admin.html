@@ -20,8 +20,8 @@
   <style>
     .admin-wrap { max-width:1400px; margin:2vh auto; padding:1.5rem; }
     .admin-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; border-bottom:1px solid var(--border-color); padding-bottom:1rem; }
-    .admin-tabs { display:flex; gap:8px; margin-bottom:1.5rem; flex-wrap:wrap; }
-    .admin-tab-btn { padding:0.75rem 1.25rem; border-radius:8px; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); color:var(--text-light); cursor:pointer; font-weight:600; transition:all 0.3s; }
+    .admin-tabs { display:flex; gap:8px; margin-bottom:1.5rem; flex-wrap:wrap; min-height:50px; align-items:flex-start; }
+    .admin-tab-btn { padding:0.75rem 1.25rem; border-radius:8px; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); color:var(--text-light); cursor:pointer; font-weight:600; transition:all 0.3s; white-space:nowrap; }
     .admin-tab-btn:hover { border-color:var(--primary-accent); }
     .admin-tab-btn.active { background:linear-gradient(135deg,var(--primary-accent),var(--secondary-accent)); color:#000; border:none; }
     .admin-panel { display:none; padding:1.5rem; background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; }
