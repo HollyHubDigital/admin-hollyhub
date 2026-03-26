@@ -1053,16 +1053,23 @@ function attachEvents(){
   const downloadFilesTab = document.querySelector('[data-tab="download-files"]');
   if(downloadFilesTab) {
     downloadFilesTab.addEventListener('click', () => {
-      setTimeout(() => loadDownloadFilesUI(), 50);
+      setTimeout(() => {
+        loadDownloadFilesUI();
+        // Attach button listener when tab is opened
+        const btn = document.getElementById('publishDownloadFileBtn');
+        if(btn && !btn._listenerAttached) {
+          btn.addEventListener('click', publishDownloadFile);
+          btn._listenerAttached = true;
+        }
+      }, 50);
     });
   }
 
-  // Publish Download File Button
+  // Publish Download File Button (deferred attachment)
   const publishDownloadFileBtn = document.getElementById('publishDownloadFileBtn');
   if(publishDownloadFileBtn) {
     publishDownloadFileBtn.addEventListener('click', publishDownloadFile);
-  } else {
-    console.warn('attachEvents: publishDownloadFileBtn not found');
+    publishDownloadFileBtn._listenerAttached = true;
   }
 
   const publishPortfolioBtn = document.getElementById('publishPortfolioBtn');
