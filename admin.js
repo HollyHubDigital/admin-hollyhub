@@ -913,7 +913,11 @@ async function loadDownloadFilesUI() {
               <div style="opacity:0.7; font-size:0.9rem">Token: <code style="background:rgba(255,255,255,0.05); padding:2px 4px; border-radius:3px;">${f.token}</code> • ${(f.size / 1024).toFixed(1)} KB</div>
               <div style="opacity:0.7; font-size:0.85rem">${new Date(f.uploadedAt).toLocaleString()}</div>
             </div>
-            <button class="btn-danger" onclick="deleteDownloadFile('${f.id}')" style="min-width:80px;">Delete</button>
+            <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+              <button class="btn-primary" onclick="viewAdminFile('${f.filename}')" style="min-width:70px; background-color:#4A90E2;">View</button>
+              <button class="btn-primary" onclick="downloadAdminFile('${f.filename}')" style="min-width:70px; background-color:#2ECC71;">Download</button>
+              <button class="btn-danger" onclick="deleteDownloadFile('${f.id}')" style="min-width:70px;">Delete</button>
+            </div>
           </div>
         `).join('');
       }
@@ -932,7 +936,11 @@ async function loadDownloadFilesUI() {
               <div style="opacity:0.7; font-size:0.9rem">${(f.size / 1024).toFixed(1)} KB</div>
               <div style="opacity:0.7; font-size:0.85rem">${new Date(f.uploadedAt).toLocaleString()}</div>
             </div>
-            <button class="btn-danger" onclick="deleteSuccessFile('${f.id}')" style="min-width:80px;">Delete</button>
+            <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+              <button class="btn-primary" onclick="viewSuccessFile('${f.filename}')" style="min-width:70px; background-color:#4A90E2;">View</button>
+              <button class="btn-primary" onclick="downloadSuccessFile('${f.filename}')" style="min-width:70px; background-color:#2ECC71;">Download</button>
+              <button class="btn-danger" onclick="deleteSuccessFile('${f.id}')" style="min-width:70px;">Delete</button>
+            </div>
           </div>
         `).join('');
       }
@@ -1035,6 +1043,36 @@ async function deleteSuccessFile(fileId) {
   } catch(e) {
     alert('Delete failed: ' + e.message);
   }
+}
+
+function viewAdminFile(filename) {
+  const url = `https://raw.githubusercontent.com/HollyHubDigital/hollyhub-visitors/main/public/uploads/${filename}`;
+  window.open(url, '_blank');
+}
+
+function downloadAdminFile(filename) {
+  const url = `https://raw.githubusercontent.com/HollyHubDigital/hollyhub-visitors/main/public/uploads/${filename}`;
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename || 'download';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function viewSuccessFile(filename) {
+  const url = `https://raw.githubusercontent.com/HollyHubDigital/hollyhub-visitors/main/public/uploads/${filename}`;
+  window.open(url, '_blank');
+}
+
+function downloadSuccessFile(filename) {
+  const url = `https://raw.githubusercontent.com/HollyHubDigital/hollyhub-visitors/main/public/uploads/${filename}`;
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename || 'download';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 function attachEvents(){
