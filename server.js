@@ -122,17 +122,13 @@ app.use('/api', async (req, res) => {
   }
 });
 
-// ✅ Serve admin.html with injected API_BASE_URL pointing to hollyhubdigitals.vercel.app
-let adminHtmlCache = null;
-
+// ✅ Serve admin.html with dynamic API_BASE_URL configuration
 function getAdminHtmlWithCorrectUrl() {
-  if (!adminHtmlCache) {
-    let html = fs.readFileSync(path.join(__dirname, 'admin', 'admin.html'), 'utf8');
-    // NOTE: The admin.html now has dynamic API_BASE_URL configuration that detects
-    // localhost vs production. We do NOT override it here to preserve the logic.
-    adminHtmlCache = html;
-  }
-  return adminHtmlCache;
+  // Read fresh from disk each time to ensure updates are served (no caching)
+  let html = fs.readFileSync(path.join(__dirname, 'admin', 'admin.html'), 'utf8');
+  // NOTE: The admin.html now has dynamic API_BASE_URL configuration that detects
+  // localhost vs production. We do NOT override it here to preserve the logic.
+  return html;
 }
 
 // ✅ Explicitly serve admin.js
