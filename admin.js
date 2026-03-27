@@ -1111,6 +1111,214 @@ function downloadSuccessFile(filename) {
     });
 }
 
+function viewAdminFile(filename) {
+  const url = `https://raw.githubusercontent.com/HollyHubDigital/hollyhub-visitors/main/public/uploads/${filename}`;
+  window.open(url, '_blank');
+}
+
+function downloadAdminFile(filename) {
+  const url = `https://raw.githubusercontent.com/HollyHubDigital/hollyhub-visitors/main/public/uploads/${filename}`;
+  
+  // Fetch file as blob and trigger download
+  fetch(url)
+    .then(response => {
+      if (!response.ok) throw new Error('Failed to download file');
+      return response.blob();
+    })
+    .then(blob => {
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename || 'download';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    })
+    .catch(error => {
+      console.error('Download error:', error);
+      alert('Download failed: ' + error.message);
+    });
+}
+
+function viewSuccessFile(filename) {
+  const url = `https://raw.githubusercontent.com/HollyHubDigital/hollyhub-visitors/main/public/uploads/${filename}`;
+  window.open(url, '_blank');
+}
+
+function downloadSuccessFile(filename) {
+  const url = `https://raw.githubusercontent.com/HollyHubDigital/hollyhub-visitors/main/public/uploads/${filename}`;
+  
+  // Fetch file as blob and trigger download
+  fetch(url)
+    .then(response => {
+      if (!response.ok) throw new Error('Failed to download file');
+      return response.blob();
+    })
+    .then(blob => {
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename || 'download';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    })
+    .catch(error => {
+      console.error('Download error:', error);
+      alert('Download failed: ' + error.message);
+    });
+}
+
+// ===== PROJECTS MANAGEMENT =====
+async function loadProjectsUI() {
+  try {
+    const r = await fetch(window.API_BASE_URL + '/api/projects', { headers: API.headers() });
+    if (!r.ok) throw new Error('Failed to load projects');
+    const projects = await r.json();
+
+    const container = document.getElementById('projectsContainer');
+    if (!container) return;
+
+    if (projects.length === 0) {
+      container.innerHTML = '<p style="opacity:0.8">No projects submitted yet</p>';
+      return;
+    }
+
+    container.innerHTML = projects.map(p => `
+      <div style="padding:1rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; margin-bottom:1rem;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
+          <div>
+            <div style="font-weight:600; color:var(--primary-accent); font-size:1.1rem;">${p.projectType}</div>
+            <div style="opacity:0.8; font-size:0.9rem;">👤 ${p.name} • 📧 ${p.contact}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:0.85rem; opacity:0.7;">${new Date(p.uploadedAt).toLocaleString()}</div>
+          </div>
+        </div>
+        
+        <div style="background:rgba(255,255,255,0.02); padding:0.75rem; border-radius:6px; margin-bottom:1rem;">
+          <div style="font-weight:600; margin-bottom:0.5rem;">Description:</div>
+          <div style="opacity:0.85;">${p.description}</div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.02); padding:0.75rem; border-radius:6px; margin-bottom:1rem;">
+          <div style="font-weight:600; margin-bottom:0.5rem;">Files (${p.files.length}):</div>
+          <div style="opacity:0.85; font-size:0.9rem;">
+            ${p.files.map(f => `<div>📄 ${f.originalname} (${(f.size / 1024).toFixed(1)} KB)</div>`).join('')}
+          </div>
+        </div>
+
+        <div style="display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:rgba(255,100,100,0.1); border:1px solid rgba(255,100,100,0.3); border-radius:6px; cursor:pointer; font-size:0.9rem;">
+            <input type="checkbox" ${p.status === 'finished' ? 'checked' : ''} onchange="toggleProjectStatus('${p.id}', this.checked)" style="cursor:pointer;"/>
+            <span style="color:${p.status === 'finished' ? '#0f0' : '#f00'};">${p.status === 'finished' ? '✓ Finished' : '⏳ Pending'}</span>
+          </label>
+          
+          <label style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:${p.payment === 'verified' ? 'rgba(0,255,0,0.1)' : 'rgba(255,100,100,0.1)'}; border:1px solid ${p.payment === 'verified' ? 'rgba(0,255,0,0.3)' : 'rgba(255,100,100,0.3)'}; border-radius:6px; cursor:pointer; font-size:0.9rem;">
+            <input type="checkbox" ${p.payment === 'verified' ? 'checked' : ''} onchange="toggleProjectPayment('${p.id}', this.checked)" style="cursor:pointer;"/>
+            <span style="color:${p.payment === 'verified' ? '#0f0' : '#f00'};">${p.payment === 'verified' ? '✓ Verified' : '💰 Verifying'}</span>
+          </label>
+        </div>
+
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          ${p.files.map((f, idx) => `
+            <button class="btn-primary" onclick="viewProjectFile('${f.filename}')" style="min-width:70px; background-color:#4A90E2; padding:0.6rem 1rem; font-size:0.9rem;">View ${idx + 1}</button>
+            <button class="btn-primary" onclick="downloadProjectFile('${f.filename}')" style="min-width:70px; background-color:#2ECC71; padding:0.6rem 1rem; font-size:0.9rem;">DL ${idx + 1}</button>
+          `).join('')}
+          <button class="btn-danger" onclick="deleteProject('${p.id}')" style="min-width:70px; padding:0.6rem 1rem; font-size:0.9rem;">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error('loadProjectsUI error:', e);
+    const container = document.getElementById('projectsContainer');
+    if (container) container.innerHTML = '<p style="color:#FF5555">Error loading projects. Check console.</p>';
+  }
+}
+
+function viewProjectFile(filename) {
+  const url = `https://raw.githubusercontent.com/HollyHubDigital/hollyhub-visitors/main/public/uploads/${filename}`;
+  window.open(url, '_blank');
+}
+
+function downloadProjectFile(filename) {
+  const url = `https://raw.githubusercontent.com/HollyHubDigital/hollyhub-visitors/main/public/uploads/${filename}`;
+  
+  fetch(url)
+    .then(response => {
+      if (!response.ok) throw new Error('Failed to download file');
+      return response.blob();
+    })
+    .then(blob => {
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename || 'download';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    })
+    .catch(error => {
+      console.error('Download error:', error);
+      alert('Download failed: ' + error.message);
+    });
+}
+
+async function toggleProjectStatus(projectId, isFinished) {
+  try {
+    const r = await fetch(window.API_BASE_URL + '/api/projects/' + projectId, {
+      method: 'PUT',
+      headers: API.headers(),
+      body: JSON.stringify({ status: isFinished ? 'finished' : 'pending' })
+    });
+
+    if (!r.ok) throw new Error(await r.text());
+
+    showToast(isFinished ? '✓ Project marked as finished' : '⏳ Project marked as pending');
+    await loadProjectsUI();
+  } catch (e) {
+    alert('Error updating status: ' + e.message);
+  }
+}
+
+async function toggleProjectPayment(projectId, isVerified) {
+  try {
+    const r = await fetch(window.API_BASE_URL + '/api/projects/' + projectId, {
+      method: 'PUT',
+      headers: API.headers(),
+      body: JSON.stringify({ payment: isVerified ? 'verified' : 'verifying' })
+    });
+
+    if (!r.ok) throw new Error(await r.text());
+
+    showToast(isVerified ? '✓ Payment verified' : '💰 Payment marked as verifying');
+    await loadProjectsUI();
+  } catch (e) {
+    alert('Error updating payment: ' + e.message);
+  }
+}
+
+async function deleteProject(projectId) {
+  if (!confirm('Delete this project permanently?')) return;
+
+  try {
+    const r = await fetch(window.API_BASE_URL + '/api/projects/' + projectId, {
+      method: 'DELETE',
+      headers: API.headers()
+    });
+
+    if (!r.ok) throw new Error(await r.text());
+
+    showToast('Project deleted');
+    await loadProjectsUI();
+  } catch (e) {
+    alert('Delete failed: ' + e.message);
+  }
+}
+
 function attachEvents(){
   const logoutBtn = document.getElementById('logoutBtn');
   if(logoutBtn) {
@@ -1135,6 +1343,16 @@ function attachEvents(){
           btn.addEventListener('click', publishDownloadFile);
           btn._listenerAttached = true;
         }
+      }, 50);
+    });
+  }
+
+  // Projects Tab listener
+  const projectsTab = document.querySelector('[data-tab="projects"]');
+  if(projectsTab) {
+    projectsTab.addEventListener('click', () => {
+      setTimeout(() => {
+        loadProjectsUI();
       }, 50);
     });
   }
