@@ -253,6 +253,22 @@
       window.API_BASE_URL = apiBase;
     }
     
+    // Prevent infinite redirect loops - clear stale auth on login page
+    // Only keep token if trying to check it, otherwise clear
+    const currentToken = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+    let redirectOnce = sessionStorage.getItem('doneAuthCheck');
+    
+    if (!redirectOnce && currentToken && currentToken.trim() !== '') {
+      sessionStorage.setItem('doneAuthCheck', 'true');
+      window.location.href = 'admin.html';
+    } else {
+      // Clear invalid tokens on login page to break redirect loops
+      if (currentToken === '' || currentToken === null) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('authToken');
+      }
+    }
+    
     const form = document.getElementById('loginForm');
     const errorMsg = document.getElementById('errorMsg');
     const successMsg = document.getElementById('successMsg');
@@ -301,6 +317,9 @@
           successMsg.textContent = 'Login successful! Redirecting...';
           successMsg.style.display = 'block';
           
+          // Clear the session flag to allow redirect after successful login
+          sessionStorage.removeItem('doneAuthCheck');
+          
           setTimeout(() => {
             window.location.href = 'admin.html';
           }, 1000);
@@ -312,14 +331,6 @@
         errorMsg.style.display = 'block';
         submitBtn.disabled = false;
         submitBtn.textContent = 'Login';
-      }
-    });
-    
-    // Check if already logged in
-    window.addEventListener('load', () => {
-      const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
-      if (token) {
-        window.location.href = 'admin.html';
       }
     });
   </script>

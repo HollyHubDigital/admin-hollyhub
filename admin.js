@@ -75,7 +75,13 @@ function requireAuth() {
   } else {
     console.warn('[requireAuth] No token found, redirecting to login');
   }
-  if(!token) { window.location.href = 'adminlogin.html'; }
+  if(!token) { 
+    // Prevent infinite redirect loops - only redirect once
+    if (!sessionStorage.getItem('redirectedToLogin')) {
+      sessionStorage.setItem('redirectedToLogin', 'true');
+      window.location.href = 'adminlogin.html'; 
+    }
+  }
 }
 
 // ===== TAB SWITCHING =====
