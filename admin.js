@@ -939,7 +939,7 @@ async function loadDownloadFilesUI() {
           <div style="padding:0.75rem; border:1px solid rgba(255,255,255,0.1); border-radius:6px; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center;">
             <div>
               <div style="font-weight:600">${f.originalname || f.filename}</div>
-              <div style="opacity:0.7; font-size:0.9rem">${(f.size / 1024).toFixed(1)} KB</div>
+              <div style="opacity:0.7; font-size:0.9rem">👤 ${f.fullName || 'N/A'} • ${(f.size / 1024).toFixed(1)} KB</div>
               <div style="opacity:0.7; font-size:0.85rem">${new Date(f.uploadedAt).toLocaleString()}</div>
             </div>
             <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
@@ -1058,12 +1058,27 @@ function viewAdminFile(filename) {
 
 function downloadAdminFile(filename) {
   const url = `https://raw.githubusercontent.com/HollyHubDigital/hollyhub-visitors/main/public/uploads/${filename}`;
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename || 'download';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  
+  // Fetch file as blob and trigger download
+  fetch(url)
+    .then(response => {
+      if (!response.ok) throw new Error('Failed to download file');
+      return response.blob();
+    })
+    .then(blob => {
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename || 'download';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    })
+    .catch(error => {
+      console.error('Download error:', error);
+      alert('Download failed: ' + error.message);
+    });
 }
 
 function viewSuccessFile(filename) {
@@ -1073,12 +1088,27 @@ function viewSuccessFile(filename) {
 
 function downloadSuccessFile(filename) {
   const url = `https://raw.githubusercontent.com/HollyHubDigital/hollyhub-visitors/main/public/uploads/${filename}`;
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename || 'download';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  
+  // Fetch file as blob and trigger download
+  fetch(url)
+    .then(response => {
+      if (!response.ok) throw new Error('Failed to download file');
+      return response.blob();
+    })
+    .then(blob => {
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename || 'download';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    })
+    .catch(error => {
+      console.error('Download error:', error);
+      alert('Download failed: ' + error.message);
+    });
 }
 
 function attachEvents(){
