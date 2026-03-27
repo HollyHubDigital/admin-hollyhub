@@ -40,7 +40,7 @@ app.get('/admin/:file', (req, res) => {
 
 // ✅ Serve adminlogin.html at root level (for login flow)
 app.get('/adminlogin.html', (req, res) => {
-  const filePath = path.join(__dirname, 'admin', 'adminlogin.html');
+  const filePath = path.join(__dirname, 'adminlogin.html');
   res.type('text/html; charset=UTF-8');
   res.sendFile(filePath, (err) => {
     if (err) res.status(404).send('Not found');
@@ -125,7 +125,8 @@ app.use('/api', async (req, res) => {
 // ✅ Serve admin.html with dynamic API_BASE_URL configuration
 function getAdminHtmlWithCorrectUrl() {
   // Read fresh from disk each time to ensure updates are served (no caching)
-  let html = fs.readFileSync(path.join(__dirname, 'admin', 'admin.html'), 'utf8');
+  // Serve from root admin.html (not from admin/admin.html nested folder)
+  let html = fs.readFileSync(path.join(__dirname, 'admin.html'), 'utf8');
   // NOTE: The admin.html now has dynamic API_BASE_URL configuration that detects
   // localhost vs production. We do NOT override it here to preserve the logic.
   return html;
