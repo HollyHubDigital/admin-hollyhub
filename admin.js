@@ -1211,14 +1211,14 @@ async function loadProjectsUI() {
         </div>
 
         <div style="display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap;">
-          <label style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:rgba(255,100,100,0.1); border:1px solid rgba(255,100,100,0.3); border-radius:6px; cursor:pointer; font-size:0.9rem;">
+          <label style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:${p.status === 'finished' ? 'rgba(0,255,0,0.1)' : 'rgba(255,165,0,0.1)'}; border:1px solid ${p.status === 'finished' ? 'rgba(0,255,0,0.3)' : 'rgba(255,165,0,0.3)'}; border-radius:6px; cursor:pointer; font-size:0.9rem;">
             <input type="checkbox" ${p.status === 'finished' ? 'checked' : ''} onchange="toggleProjectStatus('${p.id}', this.checked)" style="cursor:pointer;"/>
-            <span style="color:${p.status === 'finished' ? '#0f0' : '#f00'};">${p.status === 'finished' ? '✓ Finished' : '⏳ Pending'}</span>
+            <span style="color:${p.status === 'finished' ? '#0f0' : '#ffcc00'};">${p.status === 'finished' ? 'Delivered' : 'Pending'}</span>
           </label>
           
-          <label style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:${p.payment === 'verified' ? 'rgba(0,255,0,0.1)' : 'rgba(255,100,100,0.1)'}; border:1px solid ${p.payment === 'verified' ? 'rgba(0,255,0,0.3)' : 'rgba(255,100,100,0.3)'}; border-radius:6px; cursor:pointer; font-size:0.9rem;">
+          <label style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:${p.payment === 'verified' ? 'rgba(0,255,0,0.1)' : 'rgba(255,165,0,0.1)'}; border:1px solid ${p.payment === 'verified' ? 'rgba(0,255,0,0.3)' : 'rgba(255,165,0,0.3)'}; border-radius:6px; cursor:pointer; font-size:0.9rem;">
             <input type="checkbox" ${p.payment === 'verified' ? 'checked' : ''} onchange="toggleProjectPayment('${p.id}', this.checked)" style="cursor:pointer;"/>
-            <span style="color:${p.payment === 'verified' ? '#0f0' : '#f00'};">${p.payment === 'verified' ? '✓ Verified' : '💰 Verifying'}</span>
+            <span style="color:${p.payment === 'verified' ? '#0f0' : '#ffcc00'};">${p.payment === 'verified' ? 'Paid' : 'Verifying'}</span>
           </label>
         </div>
 
@@ -1416,6 +1416,12 @@ window.saveAppConfig = saveAppConfig;
 window.disableApp = disableApp;
 window.deleteDownloadFile = deleteDownloadFile;
 window.deleteSuccessFile = deleteSuccessFile;
+window.toggleProjectStatus = toggleProjectStatus;
+window.toggleProjectPayment = toggleProjectPayment;
+window.viewProjectFile = viewProjectFile;
+window.downloadProjectFile = downloadProjectFile;
+window.deleteProject = deleteProject;
+window.loadProjectsUI = loadProjectsUI;
 
 window.addEventListener('load', async ()=>{
   try{
