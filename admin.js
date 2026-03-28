@@ -1186,7 +1186,7 @@ async function loadProjectsUI() {
       return;
     }
 
-    container.innerHTML = projects.map(p => `
+    container.innerHTML = projects.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt)).map(p => `
       <div style="padding:1rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; margin-bottom:1rem;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
           <div>
@@ -1319,6 +1319,113 @@ async function deleteProject(projectId) {
   }
 }
 
+async function loadHeadlineUI() {
+  try {
+    const res = await fetch('/api/headline');
+    if (!res.ok) throw new Error('Failed to load headline');
+    const headline = await res.json();
+    
+    const textArea = document.getElementById('headlineText');
+    const statusDiv = document.getElementById('headlineStatus');
+    const statusText = document.getElementById('headlineStatusText');
+    const lastUpdated = document.getElementById('headlineLastUpdated');
+    const toggleBtn = document.getElementById('toggleHeadlineBtn');
+    
+    if (textArea) textArea.value = headline.text || '';
+    
+    if (statusDiv && statusText) {
+      statusDiv.style.display = 'block';
+      statusText.textContent = headline.enabled ? '✅ Headline is ACTIVE (displaying on homepage)' : '🔴 Headline is INACTIVE (not displaying)';
+      if (headline.lastUpdated) {
+        lastUpdated.textContent = `Last updated: ${new Date(headline.lastUpdated).toLocaleString()}`;
+      }
+    }
+    
+    if (toggleBtn) {
+      toggleBtn.textContent = headline.enabled ? '🟢 ON' : '🔴 OFF';
+      toggleBtn.style.background = headline.enabled ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)';
+    }
+  } catch (e) {
+    console.error('Load headline error:', e);
+    alert('Failed to load headline: ' + e.message);
+  }
+}
+
+async function editHeadline() {
+  const textArea = document.getElementById('headlineText');
+  const editBtn = document.getElementById('editHeadlineBtn');
+  const updateBtn = document.getElementById('updateHeadlineBtn');
+  
+  if (textArea.readOnly) {
+    // Enable editing
+    textArea.readOnly = false;
+    textArea.style.opacity = '1';
+    textArea.style.cursor = 'text';
+    editBtn.style.display = 'none';
+    updateBtn.style.display = 'block';
+    textArea.focus();
+  }
+}
+
+async function updateHeadline() {
+  try {
+    const textArea = document.getElementById('headlineText');
+    const editBtn = document.getElementById('editHeadlineBtn');
+    const updateBtn = document.getElementById('updateHeadlineBtn');
+    const toggleBtn = document.getElementById('toggleHeadlineBtn');
+    const res = await fetch('/api/headline');
+    const currentHeadline = await res.json();
+    
+    const text = textArea.value.trim();
+    if (!text) {
+      alert('Headline text cannot be empty');
+      return;
+    }
+    
+    const updateRes = await fetch('/api/headline', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('adminToken') || '') },
+      body: JSON.stringify({ text, enabled: currentHeadline.enabled || false })
+    });
+    
+    if (!updateRes.ok) throw new Error('Failed to update headline');
+    
+    // Reset to readonly
+    textArea.readOnly = true;
+    textArea.style.opacity = '0.8';
+    editBtn.style.display = 'block';
+    updateBtn.style.display = 'none';
+    
+    showToast('Headline updated!');
+    await loadHeadlineUI();
+  } catch (e) {
+    console.error('Update headline error:', e);
+    alert('Failed to update headline: ' + e.message);
+  }
+}
+
+async function toggleHeadline() {
+  try {
+    const res = await fetch('/api/headline');
+    const currentHeadline = await res.json();
+    
+    const newEnabled = !currentHeadline.enabled;
+    const updateRes = await fetch('/api/headline', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('adminToken') || '') },
+      body: JSON.stringify({ text: currentHeadline.text || '', enabled: newEnabled })
+    });
+    
+    if (!updateRes.ok) throw new Error('Failed to toggle headline');
+    
+    showToast(newEnabled ? 'Headline enabled!' : 'Headline disabled!');
+    await loadHeadlineUI();
+  } catch (e) {
+    console.error('Toggle headline error:', e);
+    alert('Failed to toggle headline: ' + e.message);
+  }
+}
+
 function attachEvents(){
   const logoutBtn = document.getElementById('logoutBtn');
   if(logoutBtn) {
@@ -1356,6 +1463,25 @@ function attachEvents(){
       }, 50);
     });
   }
+
+  // Headline Tab listener
+  const headlineTab = document.querySelector('[data-tab="headline"]');
+  if(headlineTab) {
+    headlineTab.addEventListener('click', () => {
+      setTimeout(() => {
+        loadHeadlineUI();
+      }, 50);
+    });
+  }
+
+  // Headline Buttons
+  const editHeadlineBtn = document.getElementById('editHeadlineBtn');
+  const updateHeadlineBtn = document.getElementById('updateHeadlineBtn');
+  const toggleHeadlineBtn = document.getElementById('toggleHeadlineBtn');
+  
+  if(editHeadlineBtn) editHeadlineBtn.addEventListener('click', editHeadline);
+  if(updateHeadlineBtn) updateHeadlineBtn.addEventListener('click', updateHeadline);
+  if(toggleHeadlineBtn) toggleHeadlineBtn.addEventListener('click', toggleHeadline);
 
   // Publish Download File Button (deferred attachment)
   const publishDownloadFileBtn = document.getElementById('publishDownloadFileBtn');

@@ -83,6 +83,7 @@
       <button class="admin-tab-btn" data-tab="blog">Blog</button>
       <button class="admin-tab-btn" data-tab="download-files">Download Files</button>
       <button class="admin-tab-btn" data-tab="projects">Projects</button>
+      <button class="admin-tab-btn" data-tab="headline">Headline</button>
       <button class="admin-tab-btn" data-tab="settings">Settings</button>
       <button class="admin-tab-btn" data-tab="analytics">Analytics</button>
     </div>
@@ -221,6 +222,32 @@
         <h3 class="section-title">Submitted Projects</h3>
         <p style="opacity:0.8; margin-bottom:1rem;">Manage projects submitted from contact.html</p>
         <div id="projectsContainer" style="max-height:600px; overflow-y:auto;"></div>
+      </div>
+    </div>
+
+    <!-- HEADLINE PANEL -->
+    <div id="headline" class="admin-panel">
+      <h2>Scrolling Headline</h2>
+      <div class="section-card">
+        <h3 class="section-title">Manage Website Headline</h3>
+        <p style="opacity:0.8; margin-bottom:1.5rem;">Create a scrolling message that displays on the homepage</p>
+        
+        <div class="form-group">
+          <label class="form-label">Headline Text</label>
+          <textarea id="headlineText" class="form-input" placeholder="Enter your scrolling headline message..." style="min-height:100px; resize:vertical;" readonly></textarea>
+          <small style="opacity:0.7; display:block; margin-top:0.5rem;">Click Edit to modify the headline text</small>
+        </div>
+
+        <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+          <button id="editHeadlineBtn" class="btn-primary" style="flex:1; min-width:120px;">✏️ Edit</button>
+          <button id="updateHeadlineBtn" class="btn-primary" style="flex:1; min-width:120px; display:none;">💾 Update</button>
+          <button id="toggleHeadlineBtn" class="btn-secondary" style="flex:1; min-width:120px;">🔴 OFF</button>
+        </div>
+
+        <div id="headlineStatus" style="padding:1rem; border-radius:8px; background:rgba(255,255,255,0.05); margin-top:1rem; display:none;">
+          <div style="font-size:0.9rem; opacity:0.8;" id="headlineStatusText"></div>
+          <div style="font-size:0.85rem; opacity:0.6; margin-top:0.5rem;" id="headlineLastUpdated"></div>
+        </div>
       </div>
     </div>
 
