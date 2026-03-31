@@ -1442,7 +1442,8 @@ window.addEventListener('load', async ()=>{
               <div style="font-weight:600; color:var(--primary-accent); font-size:1.1rem;">${p.projectType}</div>
               <div style="opacity:0.8; font-size:0.9rem; margin-top:0.5rem;"><strong>📋 Project ID:</strong> <code style="background:rgba(255,255,255,0.05); padding:0.3rem 0.6rem; border-radius:4px; font-family:monospace;">${p.id}</code></div>
               <div style="opacity:0.8; font-size:0.9rem; margin-top:0.4rem;"><strong>👤 Client:</strong> ${p.name}</div>
-              <div style="opacity:0.8; font-size:0.9rem; margin-top:0.4rem;"><strong>📧 Email:</strong> <a href="mailto:${p.contact}" style="color:var(--secondary-accent);text-decoration:none;font-weight:500">${p.contact}</a></div>
+              <div style="opacity:0.8; font-size:0.9rem; margin-top:0.4rem;"><strong>📧 Email:</strong> <a href="mailto:${p.userEmail}" style="color:var(--secondary-accent);text-decoration:none;font-weight:500">${p.userEmail}</a></div>
+              ${p.phone ? `<div style="opacity:0.8; font-size:0.9rem; margin-top:0.4rem;"><strong>📱 Phone:</strong> ${p.phone}</div>` : ''}
             </div>
             <div style="text-align:right;">
               <div style="font-size:0.85rem; opacity:0.7;">${new Date(p.uploadedAt).toLocaleString()}</div>
