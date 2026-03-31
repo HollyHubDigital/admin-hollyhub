@@ -170,12 +170,18 @@ app.get('*', (req, res) => {
   res.send(getAdminHtmlWithCorrectUrl());
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Admin Dashboard running on port ${PORT}`);
-  console.log(`📗 Open: http://localhost:${PORT}/admin`);
-});
-
+// Error handler must be defined before listen
 app.use((err, req, res, next) => {
   console.error('Server Error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
+
+// Export for Vercel; listen locally
+module.exports = app;
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`✅ Admin Dashboard running on port ${PORT}`);
+    console.log(`📗 Open: http://localhost:${PORT}/admin`);
+  });
+}
