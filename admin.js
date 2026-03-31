@@ -1186,12 +1186,18 @@ async function loadProjectsUI() {
       return;
     }
 
-    container.innerHTML = projects.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt)).map(p => `
+    container.innerHTML = projects.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt)).map(p => {
+      const email = p.userEmail || (p.contact && p.contact.includes('@') ? p.contact : 'Not provided');
+      const projectId = p.id || 'N/A';
+      const phone = p.phone || (p.contact && !p.contact.includes('@') ? p.contact : 'Not provided');
+      return `
       <div style="padding:1rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; margin-bottom:1rem;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
           <div>
             <div style="font-weight:600; color:var(--primary-accent); font-size:1.1rem;">${p.projectType}</div>
-            <div style="opacity:0.8; font-size:0.9rem;">👤 ${p.name} • 📧 ${p.contact}</div>
+            <div style="opacity:0.8; font-size:0.9rem;"><strong>📋 Project ID:</strong> <code style="background:rgba(255,255,255,0.05); padding:0.2rem 0.5rem; border-radius:4px; font-family:monospace;">${projectId}</code></div>
+            <div style="opacity:0.8; font-size:0.9rem;">👤 ${p.name} • 📧 ${email}</div>
+            ${phone ? `<div style="opacity:0.8; font-size:0.9rem;">📱 ${phone}</div>` : ''}
           </div>
           <div style="text-align:right;">
             <div style="font-size:0.85rem; opacity:0.7;">${new Date(p.uploadedAt).toLocaleString()}</div>
