@@ -1438,10 +1438,11 @@ window.addEventListener('load', async ()=>{
       container.innerHTML = projects.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt)).map(p => `
         <div style="padding:1rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; margin-bottom:1rem;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
-            <div>
+            <div style="flex:1;">
               <div style="font-weight:600; color:var(--primary-accent); font-size:1.1rem;">${p.projectType}</div>
-              <div style="opacity:0.8; font-size:0.9rem;">🆔 ID: ${p.id}</div>
-              <div style="opacity:0.8; font-size:0.9rem;">👤 ${p.name} • Email: ${p.contact}</div>
+              <div style="opacity:0.8; font-size:0.9rem; margin-top:0.5rem;"><strong>📋 Project ID:</strong> <code style="background:rgba(255,255,255,0.05); padding:0.3rem 0.6rem; border-radius:4px; font-family:monospace;">${p.id}</code></div>
+              <div style="opacity:0.8; font-size:0.9rem; margin-top:0.4rem;"><strong>👤 Client:</strong> ${p.name}</div>
+              <div style="opacity:0.8; font-size:0.9rem; margin-top:0.4rem;"><strong>📧 Email:</strong> <a href="mailto:${p.contact}" style="color:var(--secondary-accent); text-decoration:none; font-weight:500;">${p.contact}</a></div>
             </div>
             <div style="text-align:right;">
               <div style="font-size:0.85rem; opacity:0.7;">${new Date(p.uploadedAt).toLocaleString()}</div>
