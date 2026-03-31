@@ -1236,7 +1236,8 @@ async function loadProjectsUI() {
           <button class="btn-danger" onclick="deleteProject('${p.id}')" style="min-width:70px; padding:0.6rem 1rem; font-size:0.9rem;">Delete</button>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
   } catch (e) {
     console.error('loadProjectsUI error:', e);
     const container = document.getElementById('projectsContainer');
