@@ -1435,14 +1435,16 @@ window.addEventListener('load', async ()=>{
         return;
       }
 
-      container.innerHTML = projects.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt)).map(p => `
+      container.innerHTML = projects.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt)).map(p => {
+        const email = p.userEmail || p.contact || 'Not provided';
+        return `
         <div style="padding:1rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; margin-bottom:1rem;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
             <div style="flex:1;">
               <div style="font-weight:600; color:var(--primary-accent); font-size:1.1rem;">${p.projectType}</div>
               <div style="opacity:0.8; font-size:0.9rem; margin-top:0.5rem;"><strong>📋 Project ID:</strong> <code style="background:rgba(255,255,255,0.05); padding:0.3rem 0.6rem; border-radius:4px; font-family:monospace;">${p.id}</code></div>
               <div style="opacity:0.8; font-size:0.9rem; margin-top:0.4rem;"><strong>👤 Client:</strong> ${p.name}</div>
-              <div style="opacity:0.8; font-size:0.9rem; margin-top:0.4rem;"><strong>📧 Email:</strong> <a href="mailto:${p.userEmail}" style="color:var(--secondary-accent);text-decoration:none;font-weight:500">${p.userEmail}</a></div>
+              <div style="opacity:0.8; font-size:0.9rem; margin-top:0.4rem;"><strong>📧 Email:</strong> <a href="mailto:${email}" style="color:var(--secondary-accent);text-decoration:none;font-weight:500">${email}</a></div>
               ${p.phone ? `<div style="opacity:0.8; font-size:0.9rem; margin-top:0.4rem;"><strong>📱 Phone:</strong> ${p.phone}</div>` : ''}
             </div>
             <div style="text-align:right;">
@@ -1482,7 +1484,8 @@ window.addEventListener('load', async ()=>{
             <button class="btn-danger" onclick="deleteProject(\'' + p.id + '\')" style="min-width:70px; padding:0.6rem 1rem; font-size:0.9rem;">Delete</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     } catch (e) {
       console.error('loadProjectsUI error:', e);
       const container = document.getElementById('projectsContainer');
