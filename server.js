@@ -93,11 +93,18 @@ function validateAuthToken(token, userEmail) {
 }
 
 // Helper: Verify user owns a project (fetch project from visitors API to check ownership)
+// WITH TIMEOUT to prevent hanging requests
 async function verifyProjectOwnership(projectId, userEmail) {
   try {
-    // Make request to visitors API to verify project ownership
+    // Make request to visitors API with 5 second timeout
     const VISITORS_API = process.env.VISITORS_API_URL || 'https://hollyhubdigitals.vercel.app';
-    const res = await fetch(`${VISITORS_API}/api/projects?userEmail=${encodeURIComponent(userEmail)}`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    const res = await fetch(`${VISITORS_API}/api/projects?userEmail=${encodeURIComponent(userEmail)}`, {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
     
     if (!res.ok) {
       console.warn(`⚠️ Failed to fetch projects for verification: ${res.status}`);
@@ -115,8 +122,12 @@ async function verifyProjectOwnership(projectId, userEmail) {
     console.log(`✓ Project ownership verified: ${projectId} belongs to ${userEmail}`);
     return true;
   } catch (error) {
-    console.error('Error verifying project ownership:', error);
-    return false; // Fail secure
+    console.error('Error verifying project ownership:', error.message);
+    // If verification times out or fails, deny access (fail secure)
+    if (error.name === 'AbortError') {
+      console.warn(`⚠️ Project ownership verification timed out for ${userEmail}`);
+    }
+    return false;
   }
 }
 
