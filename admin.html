@@ -558,8 +558,8 @@
         const isAdminMessage = msg.sender === 'admin';
         const isCurrentUserViewing = (viewerType === 'admin' && isAdminMessage) || (viewerType === 'user' && msg.sender === 'user');
         
-        // Track unread messages
-        if (!msg.read && !isCurrentUserViewing) {
+        // Track unread messages (only if chat session still exists)
+        if (currentChatSession && !msg.read && !isCurrentUserViewing) {
           currentChatSession.readMessageIds.add(msg.id);
         }
         
