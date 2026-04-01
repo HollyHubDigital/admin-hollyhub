@@ -620,7 +620,7 @@
     }
 
     async function markMessagesAsRead() {
-      if (!currentChatSession || currentChatSession.readMessageIds.size === 0) return;
+      if (!currentChatSession || !currentChatSession.readMessageIds || currentChatSession.readMessageIds.size === 0) return;
 
       try {
         const { projectId, userEmail } = currentChatSession;
@@ -655,6 +655,8 @@
     // Check unread count for a project and update badge
     async function checkUnreadCountAdmin(projectId, userEmail) {
       try {
+        if (!projectId || !userEmail) return;
+        
         const adminToken = localStorage.getItem('adminToken');
         // Chat endpoints are on visitors API (which has GITHUB_TOKEN)
         const visitorsURL = 'https://hollyhubdigitals.vercel.app';
@@ -664,9 +666,16 @@
           headerObj['Authorization'] = `Bearer ${adminToken}`;
         }
         
+        // Add timeout to prevent 504 errors
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
         const res = await fetch(`${visitorsURL}/api/chat/unread-count?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`, {
-          headers: headerObj
+          headers: headerObj,
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
+        
         if (!res.ok) return;
 
         const data = await res.json();
@@ -676,11 +685,15 @@
           if (data.unreadCount > 0) {
             badge.textContent = data.unreadCount;
             badge.style.display = 'flex';
+            console.log(`[Badge] Project ${projectId}: ${data.unreadCount} unread messages`);
           } else {
             badge.style.display = 'none';
           }
         }
       } catch (error) {
+        if (error.name === 'AbortError') {
+          console.warn(`[Badge] Timeout checking unread for ${projectId}`);
+        }
         // Silently fail - unread checks shouldn't break the dashboard
       }
     }
@@ -690,15 +703,29 @@
     function startAdminUnreadPolling() {
       if (adminUnreadPollInterval) clearInterval(adminUnreadPollInterval);
       
+      console.log('[Badge] Starting admin unread polling...');
+      
       adminUnreadPollInterval = setInterval(async () => {
         const badges = document.querySelectorAll('[data-project-id]');
+        if (badges.length === 0) return; // No badges to check
+        
+        console.log(`[Badge] Polling ${badges.length} project badges...`);
+        
         for (const badge of badges) {
           const projectId = badge.getAttribute('data-project-id');
-          // Find the email from the project display (stored in data-project-email)
-          const projectCard = badge.closest('div');
-          const emailLink = projectCard?.querySelector('a[href^="mailto:"]');
-          if (emailLink) {
-            const userEmail = emailLink.textContent;
+          if (!projectId) continue;
+          
+          // Find the email from the project display
+          let userEmail = null;
+          const projectCard = badge.closest('[style*="padding:1rem"]');
+          if (projectCard) {
+            const emailLink = projectCard.querySelector('a[href^="mailto:"]');
+            if (emailLink) {
+              userEmail = emailLink.textContent?.trim();
+            }
+          }
+          
+          if (projectId && userEmail) {
             await checkUnreadCountAdmin(projectId, userEmail);
           }
         }
@@ -706,16 +733,25 @@
     }
 
     // Start polling when page loads
-    window.addEventListener('load', startAdminUnreadPolling);
-    // Also start polling when loading projects (in case they're loaded after page load)
-    const originalLoadProjects = window.loadProjects;
-    if (originalLoadProjects) {
-      window.loadProjects = function(...args) {
-        const result = originalLoadProjects.apply(this, args);
-        setTimeout(startAdminUnreadPolling, 500);
-        return result;
-      };
-    }
+    window.addEventListener('load', () => {
+      console.log('[Badge] Page loaded, starting polling...');
+      startAdminUnreadPolling();
+    });
+    
+    // Wrap loadProjects to restart polling after projects load
+    setTimeout(() => {
+      if (typeof window.loadProjects === 'function') {
+        const originalLoadProjects = window.loadProjects;
+        window.loadProjects = function(...args) {
+          console.log('[Badge] Projects loading, wrapping...');
+          const promise = originalLoadProjects.apply(this, args);
+          // Restart polling after projects load
+          setTimeout(startAdminUnreadPolling, 800);
+          return promise;
+        };
+        console.log('[Badge] Successfully wrapped loadProjects');
+      }
+    }, 500);
 
     // Allow Enter key to send message
     document.addEventListener('keydown', function(e) {
