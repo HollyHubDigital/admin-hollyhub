@@ -746,20 +746,12 @@
         
         for (const badge of badges) {
           const projectId = badge.getAttribute('data-project-id');
-          if (!projectId) continue;
-          
-          // Find the email from the project display
-          let userEmail = null;
-          const projectCard = badge.closest('[style*="padding:1rem"]');
-          if (projectCard) {
-            const emailLink = projectCard.querySelector('a[href^="mailto:"]');
-            if (emailLink) {
-              userEmail = emailLink.textContent?.trim();
-            }
-          }
+          const userEmail = badge.getAttribute('data-project-email');
           
           if (projectId && userEmail) {
             await checkUnreadCountAdmin(projectId, userEmail);
+          } else {
+            console.warn(`[Badge] Missing projectId or email for badge`, { projectId, userEmail });
           }
         }
       }, 3000); // Poll every 3 seconds
