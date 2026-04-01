@@ -314,8 +314,11 @@
         if (data.token) {
           localStorage.setItem('adminToken', data.token);
           localStorage.setItem('authToken', data.token);
+          localStorage.setItem('adminEmail', username); // Store admin email/username for chat
           successMsg.textContent = 'Login successful! Redirecting...';
           successMsg.style.display = 'block';
+          
+          console.log('[Admin Login] Stored adminEmail:', username);
           
           // Clear the session flag to allow redirect after successful login
           sessionStorage.removeItem('doneAuthCheck');
