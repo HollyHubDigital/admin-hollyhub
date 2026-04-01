@@ -1172,6 +1172,16 @@ function downloadSuccessFile(filename) {
 }
 
 // ===== PROJECTS MANAGEMENT =====
+function normalizeProjectEmail(rawEmail) {
+  if (typeof rawEmail !== 'string') {
+    if (rawEmail == null) return '';
+    rawEmail = String(rawEmail);
+  }
+  const clean = rawEmail.trim();
+  if (!clean || clean.toLowerCase() === 'null' || clean.toLowerCase() === 'undefined') return '';
+  return clean;
+}
+
 async function loadProjectsUI() {
   try {
     const r = await fetch(window.API_BASE_URL + '/api/projects', { headers: API.headers() });
@@ -1187,9 +1197,13 @@ async function loadProjectsUI() {
     }
 
     container.innerHTML = projects.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt)).map(p => {
-      const email = p.userEmail || (p.contact && p.contact.includes('@') ? p.contact : 'Not provided');
+      const rawEmail = normalizeProjectEmail(p.userEmail) || normalizeProjectEmail(p.contact) || normalizeProjectEmail(p.email);
+      const email = rawEmail || 'no-email@hollyhub.com';
+      const badgeEmail = rawEmail || '';
       const projectId = p.id || 'N/A';
       const phone = p.phone || (p.contact && !p.contact.includes('@') ? p.contact : 'Not provided');
+      const escapedEmail = email.replace(/\"/g, '&quot;').replace(/'/g, '&#39;');
+      const escapedBadgeEmail = badgeEmail.replace(/\"/g, '&quot;').replace(/'/g, '&#39;');
       return `
       <div style="padding:1rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; margin-bottom:1rem;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
@@ -1234,10 +1248,10 @@ async function loadProjectsUI() {
             <button class="btn-primary" onclick="downloadProjectFile('${f.filename}')" style="min-width:70px; background-color:#2ECC71; padding:0.6rem 1rem; font-size:0.9rem;">DL ${idx + 1}</button>
           `).join('')}
           <div style="position:relative; display:inline-block;">
-            <button onclick="openChatModal('${p.id}', '${email}', 'admin')" style="position:relative; padding:0.5rem; border-radius:6px; font-weight:600; font-size:0.9rem; background:none; color:var(--secondary-accent); border:none; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:0.5rem;">
+            <button onclick="openChatModal('${p.id}', '${escapedEmail}', 'admin')" style="position:relative; padding:0.5rem; border-radius:6px; font-weight:600; font-size:0.9rem; background:none; color:var(--secondary-accent); border:none; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:0.5rem;">
               <img src="https://cdn.jsdelivr.net/gh/HollyHubDigital/hollyhub-visitors@main/public/assets/chat-icon.png" alt="Chat" style="width:32px; height:32px;" />
             </button>
-            <span class="admin-chat-badge" data-project-id="${p.id}" style="position:absolute; top:-8px; right:-8px; background:var(--primary-accent); color:white; border-radius:50%; width:24px; height:24px; display:none; align-items:center; justify-content:center; font-weight:bold; font-size:0.8rem; border:2px solid #1a1a1a;"></span>
+            <span class="admin-chat-badge" data-project-id="${p.id}" data-project-email="${escapedBadgeEmail}" style="position:absolute; top:-8px; right:-8px; background:var(--primary-accent); color:white; border-radius:50%; width:24px; height:24px; display:none; align-items:center; justify-content:center; font-weight:bold; font-size:0.8rem; border:2px solid #1a1a1a;"></span>
           </div>
           <button class="btn-danger" onclick="deleteProject('${p.id}')" style="min-width:70px; padding:0.6rem 1rem; font-size:0.9rem;">Delete</button>
         </div>
