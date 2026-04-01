@@ -652,9 +652,20 @@
       }
     }
 
+    function normalizeProjectEmail(rawEmail) {
+      if (typeof rawEmail !== 'string') {
+        if (rawEmail == null) return '';
+        rawEmail = String(rawEmail);
+      }
+      const clean = rawEmail.trim();
+      if (!clean || clean.toLowerCase() === 'null' || clean.toLowerCase() === 'undefined') return '';
+      return clean;
+    }
+
     // Check unread count for a project and update badge
     async function checkUnreadCountAdmin(projectId, userEmail) {
       try {
+        userEmail = normalizeProjectEmail(userEmail);
         if (!projectId || !userEmail) return;
         
         const adminToken = localStorage.getItem('adminToken');
@@ -713,7 +724,7 @@
         
         for (const badge of badges) {
           const projectId = badge.getAttribute('data-project-id');
-          const userEmail = badge.getAttribute('data-project-email');
+          const userEmail = normalizeProjectEmail(badge.getAttribute('data-project-email'));
           
           if (projectId && userEmail) {
             await checkUnreadCountAdmin(projectId, userEmail);
