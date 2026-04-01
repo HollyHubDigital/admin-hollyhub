@@ -512,14 +512,15 @@
       try {
         const { projectId, userEmail, viewerType } = currentChatSession;
         const adminToken = localStorage.getItem('adminToken');
-        const baseURL = (typeof window.API_BASE_URL === 'string' && window.API_BASE_URL) ? window.API_BASE_URL : '';
+        // Chat endpoints are on visitors API (which has GITHUB_TOKEN)
+        const visitorsURL = 'https://hollyhubdigitals.vercel.app';
         
         const headerObj = {};
         if (adminToken) {
           headerObj['Authorization'] = `Bearer ${adminToken}`;
         }
         
-        const res = await fetch(`${baseURL}/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`, {
+        const res = await fetch(`${visitorsURL}/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`, {
           headers: headerObj
         });
         if (!res.ok) throw new Error('Failed to load messages');
@@ -578,7 +579,8 @@
         const { projectId, userEmail, viewerType } = currentChatSession;
         const adminToken = localStorage.getItem('adminToken');
         const adminEmail = localStorage.getItem('adminEmail');
-        const baseURL = (typeof window.API_BASE_URL === 'string' && window.API_BASE_URL) ? window.API_BASE_URL : '';
+        // Chat endpoints are on visitors API (which has GITHUB_TOKEN)
+        const visitorsURL = 'https://hollyhubdigitals.vercel.app';
         
         const headerObj = { 'Content-Type': 'application/json' };
         if (adminToken) {
@@ -594,11 +596,11 @@
         };
         
         console.log('[admin.html sendChatMessage] Sending payload:', payload);
-        console.log('[admin.html sendChatMessage] baseURL:', baseURL);
+        console.log('[admin.html sendChatMessage] visitorsURL:', visitorsURL);
         console.log('[admin.html sendChatMessage] adminEmail:', adminEmail);
         console.log('[admin.html sendChatMessage] adminToken:', !!adminToken);
         
-        const res = await fetch(`${baseURL}/api/chat/send`, {
+        const res = await fetch(`${visitorsURL}/api/chat/send`, {
           method: 'POST',
           headers: headerObj,
           body: JSON.stringify(payload)
@@ -620,14 +622,15 @@
       try {
         const { projectId, userEmail } = currentChatSession;
         const adminToken = localStorage.getItem('adminToken');
-        const baseURL = (typeof window.API_BASE_URL === 'string' && window.API_BASE_URL) ? window.API_BASE_URL : '';
+        // Chat endpoints are on visitors API (which has GITHUB_TOKEN)
+        const visitorsURL = 'https://hollyhubdigitals.vercel.app';
         
         const headerObj = { 'Content-Type': 'application/json' };
         if (adminToken) {
           headerObj['Authorization'] = `Bearer ${adminToken}`;
         }
         
-        const res = await fetch(`${baseURL}/api/chat/mark-read`, {
+        const res = await fetch(`${visitorsURL}/api/chat/mark-read`, {
           method: 'PUT',
           headers: headerObj,
           body: JSON.stringify({
