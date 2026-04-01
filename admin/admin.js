@@ -1437,7 +1437,13 @@ window.addEventListener('load', async ()=>{
       }
 
       container.innerHTML = projects.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt)).map(p => {
-        const email = p.userEmail || p.contact || 'Not provided';
+        const email = (p.userEmail || p.contact || p.email || 'unknown@email.com').toString().trim();
+        // Debug: log the email being used
+        console.log('[loadProjectsUI] Project ID:', p.id, '| Email:', email, '| userEmail field:', p.userEmail, '| contact field:', p.contact, '| email field:', p.email);
+        
+        // Escape email for HTML attribute
+        const escapedEmail = email.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        
         return `
         <div style="padding:1rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; margin-bottom:1rem;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
@@ -1483,10 +1489,10 @@ window.addEventListener('load', async ()=>{
 
           <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
             <div style="position:relative; display:inline-block;">
-              <button onclick="openChatModal('${p.id}', '${email}', 'admin')" style="position:relative; padding:0.5rem; border-radius:6px; font-weight:600; font-size:0.9rem; background:none; color:var(--secondary-accent); border:none; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:0.5rem;">
+              <button onclick="openChatModal('${p.id}', '${escapedEmail}', 'admin')" style="position:relative; padding:0.5rem; border-radius:6px; font-weight:600; font-size:0.9rem; background:none; color:var(--secondary-accent); border:none; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:0.5rem;">
                 <img src="https://cdn.jsdelivr.net/gh/HollyHubDigital/hollyhub-visitors@main/public/assets/chat-icon.png" alt="Chat" style="width:32px; height:32px;" />
               </button>
-              <span class="admin-chat-badge" data-project-id="${p.id}" data-project-email="${email}" style="position:absolute; top:-8px; right:-8px; background:var(--primary-accent); color:white; border-radius:50%; width:24px; height:24px; min-width:24px; min-height:24px; display:none; align-items:center; justify-content:center; font-weight:bold; font-size:0.7rem; border:2px solid #1a1a1a; line-height:1; text-align:center;"></span>
+              <span class="admin-chat-badge" data-project-id="${p.id}" data-project-email="${escapedEmail}" style="position:absolute; top:-8px; right:-8px; background:var(--primary-accent); color:white; border-radius:50%; width:24px; height:24px; min-width:24px; min-height:24px; display:none; align-items:center; justify-content:center; font-weight:bold; font-size:0.7rem; border:2px solid #1a1a1a; line-height:1; text-align:center;"></span>
             </div>
             <button class="btn-danger" onclick="deleteProject(\'' + p.id + '\')" style="min-width:70px; padding:0.6rem 1rem; font-size:0.9rem;">Delete</button>
           </div>
@@ -1575,6 +1581,10 @@ window.addEventListener('load', async ()=>{
       console.error('[updateChatBadges] Error:', e);
     }
   }
+
+  // Expose loadProjectsUI globally for admin.html
+  window.loadProjectsUI = loadProjectsUI;
+  window.loadProjects = loadProjectsUI; // Alias for compatibility
 
   window.viewProjectFile = function(filename) {
     window.open('/public/uploads/' + filename, '_blank');
