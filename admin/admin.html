@@ -585,16 +585,23 @@
           headerObj['Authorization'] = `Bearer ${adminToken}`;
         }
         
+        const payload = {
+          projectId: projectId,
+          userEmail: userEmail,
+          senderType: viewerType,
+          senderEmail: adminEmail || userEmail,
+          text: text
+        };
+        
+        console.log('[admin.html sendChatMessage] Sending payload:', payload);
+        console.log('[admin.html sendChatMessage] baseURL:', baseURL);
+        console.log('[admin.html sendChatMessage] adminEmail:', adminEmail);
+        console.log('[admin.html sendChatMessage] adminToken:', !!adminToken);
+        
         const res = await fetch(`${baseURL}/api/chat/send`, {
           method: 'POST',
           headers: headerObj,
-          body: JSON.stringify({
-            projectId: projectId,
-            userEmail: userEmail,
-            senderType: viewerType,
-            senderEmail: adminEmail || userEmail,
-            text: text
-          })
+          body: JSON.stringify(payload)
         });
 
         if (!res.ok) throw new Error('Failed to send message');

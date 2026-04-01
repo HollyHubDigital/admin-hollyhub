@@ -165,8 +165,20 @@ app.post('/api/chat/send', async (req, res) => {
   try {
     const { projectId, userEmail, senderType, senderEmail, text } = req.body;
     
-    if (!projectId || !userEmail || !senderType || !senderEmail || !text) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!projectId) {
+      return res.status(400).json({ error: 'Missing required field: projectId' });
+    }
+    if (!userEmail) {
+      return res.status(400).json({ error: 'Missing required field: userEmail' });
+    }
+    if (!senderType) {
+      return res.status(400).json({ error: 'Missing required field: senderType' });
+    }
+    if (!senderEmail) {
+      return res.status(400).json({ error: 'Missing required field: senderEmail' });
+    }
+    if (!text) {
+      return res.status(400).json({ error: 'Missing required field: text' });
     }
     
     if (!['user', 'admin'].includes(senderType)) {
