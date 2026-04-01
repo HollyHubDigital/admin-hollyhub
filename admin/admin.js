@@ -1557,14 +1557,13 @@ window.addEventListener('load', async ()=>{
           continue;
         }
         
-        // Fetch chat messages for this project
-        const visitorsAPI = 'https://hollyhubdigitals.vercel.app'; // Use visitors API for chat
-        const messageUrl = `${visitorsAPI}/api/chat/messages?projectId=${encodeURIComponent(finalProjectId)}&userEmail=${encodeURIComponent(finalProjectEmail)}&viewerType=admin`;
-        
-        console.log(`[updateChatBadges] Fetching from URL:`, messageUrl);
-        
+        // Fetch chat messages for this project via admin proxy (avoids CORS/timeouts)
+        const messageUrl = API.buildURL(`/api/chat/messages?projectId=${encodeURIComponent(finalProjectId)}&userEmail=${encodeURIComponent(finalProjectEmail)}&viewerType=admin`);
+
+        console.log(`[updateChatBadges] Fetching from proxied URL:`, messageUrl);
+
         const res = await fetch(messageUrl, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}` }
+          headers: API.headers()
         });
         
         console.log(`[updateChatBadges] Response status for ${finalProjectId}:`, res.status);

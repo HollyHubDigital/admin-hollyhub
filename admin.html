@@ -702,21 +702,15 @@
         userEmail = normalizeProjectEmail(userEmail);
         if (!projectId || !userEmail) return;
         
-        const adminToken = localStorage.getItem('adminToken');
-        // Chat endpoints are on visitors API (which has GITHUB_TOKEN)
-        const visitorsURL = 'https://hollyhubdigitals.vercel.app';
-        
-        const headerObj = {};
-        if (adminToken) {
-          headerObj['Authorization'] = `Bearer ${adminToken}`;
-        }
-        
+        // Use admin proxy to call visitors API (avoids CORS/timeouts)
+        const url = API.buildURL(`/api/chat/unread-count?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`);
+
         // Add timeout to prevent 504 errors
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        const res = await fetch(`${visitorsURL}/api/chat/unread-count?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`, {
-          headers: headerObj,
+
+        const res = await fetch(url, {
+          headers: API.headers(),
           signal: controller.signal
         });
         clearTimeout(timeoutId);
