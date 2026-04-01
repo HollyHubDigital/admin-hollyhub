@@ -50,6 +50,204 @@ app.get('/adminlogin.html', (req, res) => {
 // Generic static files
 app.use(express.static(path.join(__dirname)));
 
+// ═══════════════════════════════════════════════════════════════════
+// 💬 CHAT SYSTEM - GitHub-based message storage with real-time polling
+// ═══════════════════════════════════════════════════════════════════
+
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_OWNER = process.env.GITHUB_OWNER || 'HollyHubDigital';
+const GITHUB_REPO = process.env.GITHUB_REPO || 'hollyhub-visitors';
+const GITHUB_API = 'https://api.github.com';
+
+// Helper: GitHub API call
+async function githubApiCall(method, endpoint, body = null) {
+  const options = {
+    method,
+    headers: {
+      'Authorization': `token ${GITHUB_TOKEN}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    }
+  };
+  
+  if (body) options.body = JSON.stringify(body);
+  
+  const url = `${GITHUB_API}${endpoint}`;
+  const response = await fetch(url, options);
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`GitHub API error (${response.status}): ${error}`);
+  }
+  
+  return response.status === 204 ? null : response.json();
+}
+
+// Helper: Get chat file SHA (needed for updates)
+async function getChatFileSha(chatFileKey) {
+  try {
+    const data = await githubApiCall('GET', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/data/chats/${chatFileKey}.json`);
+    return data.sha;
+  } catch (e) {
+    return null; // File doesn't exist yet
+  }
+}
+
+// Helper: Read chat file from GitHub
+async function readChatFile(chatFileKey) {
+  try {
+    const data = await githubApiCall('GET', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/data/chats/${chatFileKey}.json`);
+    const content = Buffer.from(data.content, 'base64').toString('utf-8');
+    return JSON.parse(content);
+  } catch (e) {
+    return { messages: [] }; // New chat
+  }
+}
+
+// Helper: Write chat file to GitHub
+async function writeChatFile(chatFileKey, chatData) {
+  const sha = await getChatFileSha(chatFileKey);
+  const content = Buffer.from(JSON.stringify(chatData, null, 2)).toString('base64');
+  
+  const payload = {
+    message: `Update chat ${chatFileKey}`,
+    content: content,
+    branch: 'main'
+  };
+  
+  if (sha) payload.sha = sha;
+  
+  return githubApiCall(sha ? 'PUT' : 'POST', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/data/chats/${chatFileKey}.json`, payload);
+}
+
+// ✅ POST /api/chat/send - Send a message
+app.post('/api/chat/send', async (req, res) => {
+  try {
+    const { projectId, userEmail, senderType, senderEmail, text } = req.body;
+    
+    if (!projectId || !userEmail || !senderType || !senderEmail || !text) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const chatFileKey = `${projectId}_${userEmail}`;
+    const chatData = await readChatFile(chatFileKey);
+    
+    const message = {
+      id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      sender: senderType, // 'user' or 'admin'
+      senderEmail: senderEmail,
+      text: text,
+      timestamp: new Date().toISOString(),
+      read: false,
+      readAt: null
+    };
+    
+    chatData.messages.push(message);
+    await writeChatFile(chatFileKey, chatData);
+    
+    console.log(`✉️ Message sent to chat ${chatFileKey}`);
+    res.json({ success: true, message });
+  } catch (error) {
+    console.error('Chat send error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ✅ GET /api/chat/messages - Get all messages for a chat
+app.get('/api/chat/messages', async (req, res) => {
+  try {
+    const { projectId, userEmail } = req.query;
+    
+    if (!projectId || !userEmail) {
+      return res.status(400).json({ error: 'Missing projectId or userEmail' });
+    }
+    
+    const chatFileKey = `${projectId}_${userEmail}`;
+    const chatData = await readChatFile(chatFileKey);
+    
+    res.json(chatData.messages || []);
+  } catch (error) {
+    console.error('Chat fetch error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ✅ PUT /api/chat/mark-read - Mark messages as read and schedule deletion
+app.put('/api/chat/mark-read', async (req, res) => {
+  try {
+    const { projectId, userEmail, messageIds } = req.body;
+    
+    if (!projectId || !userEmail || !Array.isArray(messageIds)) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const chatFileKey = `${projectId}_${userEmail}`;
+    const chatData = await readChatFile(chatFileKey);
+    
+    const now = new Date();
+    const deleteAfterTime = new Date(now.getTime() + 3 * 60 * 60 * 1000); // 3 hours from now
+    
+    chatData.messages = chatData.messages.map(msg => {
+      if (messageIds.includes(msg.id)) {
+        return {
+          ...msg,
+          read: true,
+          readAt: now.toISOString(),
+          deleteAt: deleteAfterTime.toISOString()
+        };
+      }
+      return msg;
+    });
+    
+    // Remove messages that have expired (older than 3 hours from readAt)
+    chatData.messages = chatData.messages.filter(msg => {
+      if (msg.deleteAt && new Date(msg.deleteAt) < now) {
+        return false; // Remove expired message
+      }
+      return true;
+    });
+    
+    await writeChatFile(chatFileKey, chatData);
+    
+    res.json({ success: true, unreadCount: chatData.messages.filter(m => !m.read).length });
+  } catch (error) {
+    console.error('Mark read error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ✅ GET /api/chat/unread-count - Get unread message count for a chat
+app.get('/api/chat/unread-count', async (req, res) => {
+  try {
+    const { projectId, userEmail, viewerType } = req.query;
+    
+    if (!projectId || !userEmail) {
+      return res.status(400).json({ error: 'Missing projectId or userEmail' });
+    }
+    
+    const chatFileKey = `${projectId}_${userEmail}`;
+    const chatData = await readChatFile(chatFileKey);
+    
+    // Filter unread messages by viewer type
+    // If viewerType='user', filter for admin messages (user hasn't read)
+    // If viewerType='admin', filter for user messages (admin hasn't read)
+    const unreadMessages = chatData.messages.filter(msg => {
+      if (!msg.read) {
+        if (viewerType === 'user' && msg.sender === 'admin') return true;
+        if (viewerType === 'admin' && msg.sender === 'user') return true;
+      }
+      return false;
+    });
+    
+    res.json({ unreadCount: unreadMessages.length, messages: unreadMessages });
+  } catch (error) {
+    console.error('Unread count error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+
 // ✅ Proxy all API requests to visitors domain
 app.use('/api', async (req, res) => {
   try {
