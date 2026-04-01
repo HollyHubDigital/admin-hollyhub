@@ -145,14 +145,30 @@ async function githubApiCall(method, endpoint, body = null) {
   if (body) options.body = JSON.stringify(body);
   
   const url = `${GITHUB_API}${endpoint}`;
-  const response = await fetch(url, options);
   
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`GitHub API error (${response.status}): ${error}`);
+  // Add timeout to prevent hanging on slow GitHub API
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+  options.signal = controller.signal;
+  
+  try {
+    const response = await fetch(url, options);
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`GitHub API error (${response.status}): ${error}`);
+    }
+    
+    return response.status === 204 ? null : response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      console.error(`⚠️ GitHub API timeout for ${method} ${endpoint}`);
+      throw new Error(`GitHub API timeout: request took longer than 15 seconds`);
+    }
+    throw error;
   }
-  
-  return response.status === 204 ? null : response.json();
 }
 
 // Helper: Get chat file SHA (needed for updates)
