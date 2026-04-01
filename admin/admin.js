@@ -1481,7 +1481,13 @@ window.addEventListener('load', async ()=>{
             </label>
           </div>
 
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+            <div style="position:relative; display:inline-block;">
+              <button onclick="openChatModal('${p.id}', '${email}', 'admin')" style="position:relative; padding:0.5rem; border-radius:6px; font-weight:600; font-size:0.9rem; background:none; color:var(--secondary-accent); border:none; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:0.5rem;">
+                <img src="https://cdn.jsdelivr.net/gh/HollyHubDigital/hollyhub-visitors@main/public/assets/chat-icon.png" alt="Chat" style="width:32px; height:32px;" />
+              </button>
+              <span class="admin-chat-badge" data-project-id="${p.id}" style="position:absolute; top:-8px; right:-8px; background:var(--primary-accent); color:white; border-radius:50%; width:24px; height:24px; display:none; align-items:center; justify-content:center; font-weight:bold; font-size:0.8rem; border:2px solid #1a1a1a;"></span>
+            </div>
             <button class="btn-danger" onclick="deleteProject(\'' + p.id + '\')" style="min-width:70px; padding:0.6rem 1rem; font-size:0.9rem;">Delete</button>
           </div>
         </div>
