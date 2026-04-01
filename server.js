@@ -403,6 +403,11 @@ app.get('/api/chat/unread-count', async (req, res) => {
       return res.status(400).json({ error: 'Missing projectId or userEmail' });
     }
     
+    const viewType = viewerType || 'user'; // Default to user if not specified
+    if (!['admin', 'user'].includes(viewType)) {
+      return res.status(400).json({ error: 'Invalid viewerType' });
+    }
+    
     // ═══════ AUTH VALIDATION ═══════
     const token = extractAuthToken(req);
     if (!token) {
@@ -410,18 +415,26 @@ app.get('/api/chat/unread-count', async (req, res) => {
       return res.status(401).json({ error: 'Missing or invalid authentication token' });
     }
     
-    // Validate token legitimacy
-    if (!validateAuthToken(token, userEmail)) {
-      console.warn(`🚫 Unread count: Invalid token for ${userEmail}`);
-      return res.status(401).json({ error: 'Invalid or expired authentication token' });
-    }
-    
     // ═══════ PERMISSION VALIDATION ═══════
-    // Verify the authenticated user owns the project
-    const ownsProject = await verifyProjectOwnership(projectId, userEmail);
-    if (!ownsProject) {
-      console.warn(`🚫 Unread count: User ${userEmail} attempted to access unread count for project ${projectId} they don't own`);
-      return res.status(403).json({ error: 'You do not have permission to access this chat' });
+    if (viewType === 'admin') {
+      // Admin can check unread count for any project
+      if (!validateAuthToken(token, userEmail)) {
+        console.warn(`🚫 Unread count: Invalid admin token`);
+        return res.status(401).json({ error: 'Invalid or expired authentication token' });
+      }
+      console.log(`✓ Admin checking unread count for project ${projectId}`);
+    } else {
+      // User can only check unread count for their own projects
+      if (!validateAuthToken(token, userEmail)) {
+        console.warn(`🚫 Unread count: Invalid token for user ${userEmail}`);
+        return res.status(401).json({ error: 'Invalid or expired authentication token' });
+      }
+      
+      const ownsProject = await verifyProjectOwnership(projectId, userEmail);
+      if (!ownsProject) {
+        console.warn(`🚫 Unread count: User ${userEmail} attempted to access unread count for project ${projectId} they don't own`);
+        return res.status(403).json({ error: 'You do not have permission to access this chat' });
+      }
     }
     
     const chatFileKey = `${projectId}_${userEmail}`;
@@ -432,8 +445,8 @@ app.get('/api/chat/unread-count', async (req, res) => {
     // If viewerType='admin', filter for user messages (admin hasn't read)
     const unreadMessages = chatData.messages.filter(msg => {
       if (!msg.read) {
-        if (viewerType === 'user' && msg.sender === 'admin') return true;
-        if (viewerType === 'admin' && msg.sender === 'user') return true;
+        if (viewType === 'user' && msg.sender === 'admin') return true;
+        if (viewType === 'admin' && msg.sender === 'user') return true;
       }
       return false;
     });
