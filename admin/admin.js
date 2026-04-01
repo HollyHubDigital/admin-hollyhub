@@ -1486,7 +1486,7 @@ window.addEventListener('load', async ()=>{
               <button onclick="openChatModal('${p.id}', '${email}', 'admin')" style="position:relative; padding:0.5rem; border-radius:6px; font-weight:600; font-size:0.9rem; background:none; color:var(--secondary-accent); border:none; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:0.5rem;">
                 <img src="https://cdn.jsdelivr.net/gh/HollyHubDigital/hollyhub-visitors@main/public/assets/chat-icon.png" alt="Chat" style="width:32px; height:32px;" />
               </button>
-              <span class="admin-chat-badge" data-project-id="${p.id}" data-project-email="${email}" style="position:absolute; top:-8px; right:-8px; background:var(--primary-accent); color:white; border-radius:50%; width:24px; height:24px; display:none; align-items:center; justify-content:center; font-weight:bold; font-size:0.8rem; border:2px solid #1a1a1a;"></span>
+              <span class="admin-chat-badge" data-project-id="${p.id}" data-project-email="${email}" style="position:absolute; top:-8px; right:-8px; background:var(--primary-accent); color:white; border-radius:50%; width:24px; height:24px; min-width:24px; min-height:24px; display:none; align-items:center; justify-content:center; font-weight:bold; font-size:0.7rem; border:2px solid #1a1a1a; line-height:1; text-align:center;"></span>
             </div>
             <button class="btn-danger" onclick="deleteProject(\'' + p.id + '\')" style="min-width:70px; padding:0.6rem 1rem; font-size:0.9rem;">Delete</button>
           </div>
@@ -1507,31 +1507,53 @@ window.addEventListener('load', async ()=>{
   async function updateChatBadges() {
     try {
       const badges = document.querySelectorAll('.admin-chat-badge');
+      console.log('[updateChatBadges] Found', badges.length, 'badges to update');
+      
+      if (badges.length === 0) {
+        console.warn('[updateChatBadges] No badges found in DOM, aborting');
+        return;
+      }
+      
       for (const badge of badges) {
         const projectId = badge.getAttribute('data-project-id');
         const projectEmail = badge.getAttribute('data-project-email');
         
+        console.log(`[updateChatBadges] Checking project: ${projectId}, email: ${projectEmail}`);
+        
         // Fetch chat messages for this project
         const visitorsAPI = 'https://hollyhubdigitals.vercel.app'; // Use visitors API for chat
-        const res = await fetch(`${visitorsAPI}/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(projectEmail)}&viewerType=admin`, {
+        const messageUrl = `${visitorsAPI}/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(projectEmail)}&viewerType=admin`;
+        
+        const res = await fetch(messageUrl, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}` }
         });
         
-        if (!res.ok) continue;
+        console.log(`[updateChatBadges] Response status for ${projectId}:`, res.status);
+        
+        if (!res.ok) {
+          console.warn(`[updateChatBadges] Failed to fetch messages for ${projectId}: ${res.status}`);
+          continue;
+        }
         
         const messages = await res.json();
+        console.log(`[updateChatBadges] Got ${messages.length} messages for ${projectId}`);
+        
         // Count unread messages from user (sender === 'user' and read === false)
         const unreadCount = messages.filter(m => m.sender === 'user' && !m.read).length;
+        
+        console.log(`[updateChatBadges] Unread count for ${projectId}: ${unreadCount}`);
         
         if (unreadCount > 0) {
           badge.style.display = 'flex';
           badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+          console.log(`[updateChatBadges] Badge updated for ${projectId}: showing ${unreadCount}`);
         } else {
           badge.style.display = 'none';
+          console.log(`[updateChatBadges] Badge hidden for ${projectId} (no unread messages)`);
         }
       }
     } catch (e) {
-      console.warn('updateChatBadges error:', e);
+      console.error('[updateChatBadges] Error:', e);
     }
   }
 
