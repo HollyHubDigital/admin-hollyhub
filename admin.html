@@ -685,6 +685,71 @@
       }
     }
 
+    // Check unread count for a project and update badge
+    async function checkUnreadCountAdmin(projectId, userEmail) {
+      try {
+        const adminToken = localStorage.getItem('adminToken');
+        // Chat endpoints are on visitors API (which has GITHUB_TOKEN)
+        const visitorsURL = 'https://hollyhubdigitals.vercel.app';
+        
+        const headerObj = {};
+        if (adminToken) {
+          headerObj['Authorization'] = `Bearer ${adminToken}`;
+        }
+        
+        const res = await fetch(`${visitorsURL}/api/chat/unread-count?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`, {
+          headers: headerObj
+        });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const badge = document.querySelector(`[data-project-id="${projectId}"]`);
+        
+        if (badge) {
+          if (data.unreadCount > 0) {
+            badge.textContent = data.unreadCount;
+            badge.style.display = 'flex';
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+      } catch (error) {
+        // Silently fail - unread checks shouldn't break the dashboard
+      }
+    }
+
+    // Poll all project badges for unread messages
+    let adminUnreadPollInterval = null;
+    function startAdminUnreadPolling() {
+      if (adminUnreadPollInterval) clearInterval(adminUnreadPollInterval);
+      
+      adminUnreadPollInterval = setInterval(async () => {
+        const badges = document.querySelectorAll('[data-project-id]');
+        for (const badge of badges) {
+          const projectId = badge.getAttribute('data-project-id');
+          // Find the email from the project display (stored in data-project-email)
+          const projectCard = badge.closest('div');
+          const emailLink = projectCard?.querySelector('a[href^="mailto:"]');
+          if (emailLink) {
+            const userEmail = emailLink.textContent;
+            await checkUnreadCountAdmin(projectId, userEmail);
+          }
+        }
+      }, 3000); // Poll every 3 seconds
+    }
+
+    // Start polling when page loads
+    window.addEventListener('load', startAdminUnreadPolling);
+    // Also start polling when loading projects (in case they're loaded after page load)
+    const originalLoadProjects = window.loadProjects;
+    if (originalLoadProjects) {
+      window.loadProjects = function(...args) {
+        const result = originalLoadProjects.apply(this, args);
+        setTimeout(startAdminUnreadPolling, 500);
+        return result;
+      };
+    }
+
     // Allow Enter key to send message
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Enter' && document.getElementById('chatMessageInput') === document.activeElement) {
