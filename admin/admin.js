@@ -1493,10 +1493,45 @@ window.addEventListener('load', async ()=>{
         </div>
       `;
       }).join('');
+      
+      // Update chat badges after rendering projects
+      await updateChatBadges();
     } catch (e) {
       console.error('loadProjectsUI error:', e);
       const container = document.getElementById('projectsContainer');
       if (container) container.innerHTML = '<p style="color:#FF5555">Error loading projects. Check console.</p>';
+    }
+  }
+
+  // ===== UPDATE CHAT NOTIFICATION BADGES =====
+  async function updateChatBadges() {
+    try {
+      const badges = document.querySelectorAll('.admin-chat-badge');
+      for (const badge of badges) {
+        const projectId = badge.getAttribute('data-project-id');
+        const projectEmail = badge.getAttribute('data-project-email');
+        
+        // Fetch chat messages for this project
+        const visitorsAPI = 'https://hollyhubdigitals.vercel.app'; // Use visitors API for chat
+        const res = await fetch(`${visitorsAPI}/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(projectEmail)}&viewerType=admin`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}` }
+        });
+        
+        if (!res.ok) continue;
+        
+        const messages = await res.json();
+        // Count unread messages from user (sender === 'user' and read === false)
+        const unreadCount = messages.filter(m => m.sender === 'user' && !m.read).length;
+        
+        if (unreadCount > 0) {
+          badge.style.display = 'flex';
+          badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    } catch (e) {
+      console.warn('updateChatBadges error:', e);
     }
   }
 
@@ -1573,6 +1608,9 @@ window.addEventListener('load', async ()=>{
       btn.addEventListener('click', loadProjectsUI);
     }
   });
+
+  // Start periodic badge updates for chat notifications
+  setInterval(updateChatBadges, 5000); // Update badges every 5 seconds
 
   // ===== HEADLINE MANAGEMENT =====
   async function loadHeadlineUI() {
