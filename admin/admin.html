@@ -7,6 +7,8 @@
   <title>Admin Dashboard - Holly</title>
   <link rel="stylesheet" href="../styles.css" />
   <script>
+    // Force deployment cache bust: 2026-04-01T12:00:00Z
+    // Chat endpoints moved to visitors API - use https://hollyhubdigitals.vercel.app
     // Configure API base URL for all endpoints
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       window.API_BASE_URL = 'http://localhost:3000';
@@ -15,6 +17,7 @@
       window.API_BASE_URL = window.location.origin;
     }
     console.log('[Admin] API Base URL configured:', window.API_BASE_URL);
+    console.log('[Admin] Chat endpoints: https://hollyhubdigitals.vercel.app/api/chat/*');
   </script>
   <style>
     .admin-wrap { max-width:1400px; margin:2vh auto; padding:1.5rem; }
