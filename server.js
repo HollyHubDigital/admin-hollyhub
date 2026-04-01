@@ -186,27 +186,6 @@ app.post('/api/chat/send', async (req, res) => {
   try {
     const { projectId, userEmail, senderType, senderEmail, text } = req.body;
     
-    // ═══════ AUTH VALIDATION ═══════
-    const token = extractAuthToken(req);
-    if (!token) {
-      console.warn('🚫 Chat send: Missing authentication token');
-      return res.status(401).json({ error: 'Missing or invalid authentication token' });
-    }
-    
-    // Validate token legitimacy
-    if (!validateAuthToken(token, userEmail)) {
-      console.warn(`🚫 Chat send: Invalid token for ${userEmail}`);
-      return res.status(401).json({ error: 'Invalid or expired authentication token' });
-    }
-    
-    // ═══════ PERMISSION VALIDATION ═══════
-    // Verify the authenticated user owns the project they're messaging about
-    const ownsProject = await verifyProjectOwnership(projectId, userEmail);
-    if (!ownsProject) {
-      console.warn(`🚫 Chat send: User ${userEmail} attempted unauthorized access to project ${projectId}`);
-      return res.status(403).json({ error: 'You do not have permission to message this project' });
-    }
-    
     // ═══════ INPUT VALIDATION ═══════
     if (!projectId || !userEmail || !senderType || !senderEmail || !text) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -216,10 +195,41 @@ app.post('/api/chat/send', async (req, res) => {
       return res.status(400).json({ error: 'Invalid senderType (must be "user" or "admin")' });
     }
     
-    // Verify sender email matches authenticated user
-    if (senderEmail !== userEmail) {
-      console.warn(`🚫 Chat send: Sender email ${senderEmail} does not match authenticated email ${userEmail}`);
-      return res.status(403).json({ error: 'Sender email does not match authenticated user' });
+    // ═══════ AUTH VALIDATION ═══════
+    const token = extractAuthToken(req);
+    if (!token) {
+      console.warn('🚫 Chat send: Missing authentication token');
+      return res.status(401).json({ error: 'Missing or invalid authentication token' });
+    }
+    
+    // ═══════ PERMISSION VALIDATION ═══════
+    // For user senders: validate they own the project and their email matches
+    if (senderType === 'user') {
+      if (!validateAuthToken(token, userEmail)) {
+        console.warn(`🚫 Chat send: Invalid token for user ${userEmail}`);
+        return res.status(401).json({ error: 'Invalid or expired authentication token' });
+      }
+      
+      if (senderEmail !== userEmail) {
+        console.warn(`🚫 Chat send: User sender email ${senderEmail} does not match project owner ${userEmail}`);
+        return res.status(403).json({ error: 'User cannot send messages from a different email' });
+      }
+      
+      const ownsProject = await verifyProjectOwnership(projectId, userEmail);
+      if (!ownsProject) {
+        console.warn(`🚫 Chat send: User ${userEmail} does not own project ${projectId}`);
+        return res.status(403).json({ error: 'You do not have permission to message this project' });
+      }
+    }
+    // For admin senders: admins can message any project (validate token exists for logging)
+    else if (senderType === 'admin') {
+      if (!validateAuthToken(token, senderEmail)) {
+        console.warn(`🚫 Chat send: Invalid admin token for ${senderEmail}`);
+        return res.status(401).json({ error: 'Invalid or expired authentication token' });
+      }
+      
+      // Admins can message any project - no ownership check needed
+      console.log(`✓ Admin ${senderEmail} verified to message project ${projectId}`);
     }
     
     const chatFileKey = `${projectId}_${userEmail}`;
@@ -249,11 +259,16 @@ app.post('/api/chat/send', async (req, res) => {
 // ✅ GET /api/chat/messages - Get all messages for a chat (with auth validation)
 app.get('/api/chat/messages', async (req, res) => {
   try {
-    const { projectId, userEmail } = req.query;
+    const { projectId, userEmail, viewerType } = req.query;
     
     // ═══════ INPUT VALIDATION ═══════
     if (!projectId || !userEmail) {
       return res.status(400).json({ error: 'Missing projectId or userEmail' });
+    }
+    
+    const viewType = viewerType || 'user'; // Default to user if not specified
+    if (!['admin', 'user'].includes(viewType)) {
+      return res.status(400).json({ error: 'Invalid viewerType' });
     }
     
     // ═══════ AUTH VALIDATION ═══════
@@ -263,18 +278,26 @@ app.get('/api/chat/messages', async (req, res) => {
       return res.status(401).json({ error: 'Missing or invalid authentication token' });
     }
     
-    // Validate token legitimacy
-    if (!validateAuthToken(token, userEmail)) {
-      console.warn(`🚫 Chat fetch: Invalid token for ${userEmail}`);
-      return res.status(401).json({ error: 'Invalid or expired authentication token' });
-    }
-    
     // ═══════ PERMISSION VALIDATION ═══════
-    // Verify the authenticated user owns the project
-    const ownsProject = await verifyProjectOwnership(projectId, userEmail);
-    if (!ownsProject) {
-      console.warn(`🚫 Chat fetch: User ${userEmail} attempted to access project ${projectId} they don't own`);
-      return res.status(403).json({ error: 'You do not have permission to view this chat' });
+    if (viewType === 'admin') {
+      // Admin can view any project's messages - just validate token exists
+      if (!validateAuthToken(token, userEmail)) {
+        console.warn(`🚫 Chat fetch: Invalid admin token`);
+        return res.status(401).json({ error: 'Invalid or expired authentication token' });
+      }
+      console.log(`✓ Admin viewing messages for project ${projectId} (owner: ${userEmail})`);
+    } else {
+      // User can only view their own project's messages
+      if (!validateAuthToken(token, userEmail)) {
+        console.warn(`🚫 Chat fetch: Invalid token for user ${userEmail}`);
+        return res.status(401).json({ error: 'Invalid or expired authentication token' });
+      }
+      
+      const ownsProject = await verifyProjectOwnership(projectId, userEmail);
+      if (!ownsProject) {
+        console.warn(`🚫 Chat fetch: User ${userEmail} attempted to access project ${projectId} they don't own`);
+        return res.status(403).json({ error: 'You do not have permission to view this chat' });
+      }
     }
     
     const chatFileKey = `${projectId}_${userEmail}`;
@@ -291,11 +314,16 @@ app.get('/api/chat/messages', async (req, res) => {
 // ✅ PUT /api/chat/mark-read - Mark messages as read and schedule deletion (with auth validation)
 app.put('/api/chat/mark-read', async (req, res) => {
   try {
-    const { projectId, userEmail, messageIds } = req.body;
+    const { projectId, userEmail, messageIds, viewerType } = req.body;
     
     // ═══════ INPUT VALIDATION ═══════
     if (!projectId || !userEmail || !Array.isArray(messageIds)) {
       return res.status(400).json({ error: 'Missing required fields or invalid messageIds' });
+    }
+    
+    const viewType = viewerType || 'user'; // Default to user if not specified
+    if (!['admin', 'user'].includes(viewType)) {
+      return res.status(400).json({ error: 'Invalid viewerType' });
     }
     
     // ═══════ AUTH VALIDATION ═══════
@@ -305,18 +333,26 @@ app.put('/api/chat/mark-read', async (req, res) => {
       return res.status(401).json({ error: 'Missing or invalid authentication token' });
     }
     
-    // Validate token legitimacy
-    if (!validateAuthToken(token, userEmail)) {
-      console.warn(`🚫 Mark read: Invalid token for ${userEmail}`);
-      return res.status(401).json({ error: 'Invalid or expired authentication token' });
-    }
-    
     // ═══════ PERMISSION VALIDATION ═══════
-    // Verify the authenticated user owns the project
-    const ownsProject = await verifyProjectOwnership(projectId, userEmail);
-    if (!ownsProject) {
-      console.warn(`🚫 Mark read: User ${userEmail} attempted to modify chat for project ${projectId} they don't own`);
-      return res.status(403).json({ error: 'You do not have permission to modify this chat' });
+    if (viewType === 'admin') {
+      // Admin can mark any project's messages as read
+      if (!validateAuthToken(token, userEmail)) {
+        console.warn(`🚫 Mark read: Invalid admin token`);
+        return res.status(401).json({ error: 'Invalid or expired authentication token' });
+      }
+      console.log(`✓ Admin marking messages as read for project ${projectId}`);
+    } else {
+      // User can only mark their own project's messages as read
+      if (!validateAuthToken(token, userEmail)) {
+        console.warn(`🚫 Mark read: Invalid token for user ${userEmail}`);
+        return res.status(401).json({ error: 'Invalid or expired authentication token' });
+      }
+      
+      const ownsProject = await verifyProjectOwnership(projectId, userEmail);
+      if (!ownsProject) {
+        console.warn(`🚫 Mark read: User ${userEmail} attempted to modify chat for project ${projectId} they don't own`);
+        return res.status(403).json({ error: 'You do not have permission to modify this chat' });
+      }
     }
     
     const chatFileKey = `${projectId}_${userEmail}`;

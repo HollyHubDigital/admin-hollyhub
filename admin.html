@@ -521,7 +521,7 @@
           headerObj['Authorization'] = `Bearer ${adminToken}`;
         }
         
-        const res = await fetch(`${baseURL}/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}`, {
+        const res = await fetch(`${baseURL}/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`, {
           headers: headerObj
         });
         if (!res.ok) throw new Error('Failed to load messages');
@@ -626,7 +626,8 @@
           body: JSON.stringify({
             projectId: projectId,
             userEmail: userEmail,
-            messageIds: Array.from(currentChatSession.readMessageIds)
+            messageIds: Array.from(currentChatSession.readMessageIds),
+            viewerType: 'admin'
           })
         });
 
