@@ -1518,38 +1518,57 @@ window.addEventListener('load', async ()=>{
         const projectId = badge.getAttribute('data-project-id');
         const projectEmail = badge.getAttribute('data-project-email');
         
-        console.log(`[updateChatBadges] Checking project: ${projectId}, email: ${projectEmail}`);
+        console.log(`[updateChatBadges] Badge element:`, badge);
+        console.log(`[updateChatBadges] Raw attributes:`, {
+          'data-project-id': badge.getAttribute('data-project-id'),
+          'data-project-email': badge.getAttribute('data-project-email'),
+          'dataset.projectId': badge.dataset.projectId,
+          'dataset.projectEmail': badge.dataset.projectEmail
+        });
+        
+        // Try both getAttribute and dataset
+        const finalProjectId = projectId || badge.dataset.projectId;
+        const finalProjectEmail = projectEmail || badge.dataset.projectEmail;
+        
+        console.log(`[updateChatBadges] Using - Project: ${finalProjectId}, Email: ${finalProjectEmail}`);
+        
+        if (!finalProjectId || !finalProjectEmail) {
+          console.error(`[updateChatBadges] Missing attributes - ID: ${finalProjectId}, Email: ${finalProjectEmail}`);
+          continue;
+        }
         
         // Fetch chat messages for this project
         const visitorsAPI = 'https://hollyhubdigitals.vercel.app'; // Use visitors API for chat
-        const messageUrl = `${visitorsAPI}/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(projectEmail)}&viewerType=admin`;
+        const messageUrl = `${visitorsAPI}/api/chat/messages?projectId=${encodeURIComponent(finalProjectId)}&userEmail=${encodeURIComponent(finalProjectEmail)}&viewerType=admin`;
+        
+        console.log(`[updateChatBadges] Fetching from URL:`, messageUrl);
         
         const res = await fetch(messageUrl, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}` }
         });
         
-        console.log(`[updateChatBadges] Response status for ${projectId}:`, res.status);
+        console.log(`[updateChatBadges] Response status for ${finalProjectId}:`, res.status);
         
         if (!res.ok) {
-          console.warn(`[updateChatBadges] Failed to fetch messages for ${projectId}: ${res.status}`);
+          console.warn(`[updateChatBadges] Failed to fetch messages for ${finalProjectId}: ${res.status}`);
           continue;
         }
         
         const messages = await res.json();
-        console.log(`[updateChatBadges] Got ${messages.length} messages for ${projectId}`);
+        console.log(`[updateChatBadges] Got ${messages.length} messages for ${finalProjectId}`);
         
         // Count unread messages from user (sender === 'user' and read === false)
         const unreadCount = messages.filter(m => m.sender === 'user' && !m.read).length;
         
-        console.log(`[updateChatBadges] Unread count for ${projectId}: ${unreadCount}`);
+        console.log(`[updateChatBadges] Unread count for ${finalProjectId}: ${unreadCount}`);
         
         if (unreadCount > 0) {
           badge.style.display = 'flex';
           badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-          console.log(`[updateChatBadges] Badge updated for ${projectId}: showing ${unreadCount}`);
+          console.log(`[updateChatBadges] Badge updated for ${finalProjectId}: showing ${unreadCount}`);
         } else {
           badge.style.display = 'none';
-          console.log(`[updateChatBadges] Badge hidden for ${projectId} (no unread messages)`);
+          console.log(`[updateChatBadges] Badge hidden for ${finalProjectId} (no unread messages)`);
         }
       }
     } catch (e) {
