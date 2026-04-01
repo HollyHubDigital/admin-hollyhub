@@ -157,7 +157,46 @@ async function writeChatFile(chatFileKey, chatData) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 💬 CHAT ENDPOINTS
+// 💬 CHAT ENDPOINTS - MOVED TO VISITORS API
+// ═══════════════════════════════════════════════════════════════════
+// ⚠️ These endpoints have been MOVED to https://hollyhubdigitals.vercel.app
+// Reason: Visitors API has GITHUB_TOKEN in environment, admin-hollyhub does not
+// 
+// Block old chat requests and redirect to visitors API:
+app.post('/api/chat/send', (req, res) => {
+  res.status(410).json({ 
+    error: 'Chat endpoints moved to visitors API',
+    redirectTo: 'https://hollyhubdigitals.vercel.app/api/chat/send',
+    message: 'Use https://hollyhubdigitals.vercel.app for all chat operations'
+  });
+});
+
+app.get('/api/chat/messages', (req, res) => {
+  res.status(410).json({ 
+    error: 'Chat endpoints moved to visitors API',
+    redirectTo: 'https://hollyhubdigitals.vercel.app/api/chat/messages',
+    message: 'Use https://hollyhubdigitals.vercel.app for all chat operations'
+  });
+});
+
+app.put('/api/chat/mark-read', (req, res) => {
+  res.status(410).json({ 
+    error: 'Chat endpoints moved to visitors API',
+    redirectTo: 'https://hollyhubdigitals.vercel.app/api/chat/mark-read',
+    message: 'Use https://hollyhubdigitals.vercel.app for all chat operations'
+  });
+});
+
+app.get('/api/chat/unread-count', (req, res) => {
+  res.status(410).json({ 
+    error: 'Chat endpoints moved to visitors API',
+    redirectTo: 'https://hollyhubdigitals.vercel.app/api/chat/unread-count',
+    message: 'Use https://hollyhubdigitals.vercel.app for all chat operations'
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// 💬 OLD CHAT ENDPOINTS (DEPRECATED - see above)
 // ═══════════════════════════════════════════════════════════════════
 
 // ✅ POST /api/chat/send - Send a message (with auth validation)
