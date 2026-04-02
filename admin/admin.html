@@ -520,10 +520,10 @@
         const { projectId, userEmail, viewerType } = currentChatSession;
         
         // Route through admin proxy API (avoids CORS/timeouts)
-        const url = API.buildURL(`/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`);
+        const url = window.API.buildURL(`/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`);
         
         const res = await fetch(url, {
-          headers: API.headers()
+          headers: window.API.headers()
         });
         if (!res.ok) throw new Error('Failed to load messages');
         
@@ -592,9 +592,9 @@
         console.log('[sendChatMessage] Sending payload:', payload);
         
         // Route through admin proxy API (avoids CORS/timeouts)
-        const res = await fetch(API.buildURL('/api/chat/send'), {
+        const res = await fetch(window.API.buildURL('/api/chat/send'), {
           method: 'POST',
-          headers: API.headers(),
+          headers: window.API.headers(),
           body: JSON.stringify(payload)
         });
 
@@ -617,11 +617,11 @@
         const messageIds = Array.from(currentChatSession.readMessageIds);
         
         // Route through admin proxy API (avoids CORS/timeouts)
-        const url = API.buildURL('/api/chat/mark-read');
+        const url = window.API.buildURL('/api/chat/send');
 
         const res = await fetch(url, {
-          method: 'PUT',
-          headers: API.headers(),
+          method: 'POST',
+          headers: window.API.headers(),
           body: JSON.stringify({
             projectId: projectId,
             userEmail: userEmail,
@@ -665,14 +665,14 @@
         if (!projectId || !userEmail) return;
         
         // Route through admin proxy API (avoids CORS/timeouts)
-        const url = API.buildURL(`/api/chat/unread-count?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`);
+        const url = window.API.buildURL(`/api/chat/unread-count?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`);
         
         // Add timeout to prevent 504 errors
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
         
         const res = await fetch(url, {
-          headers: API.headers(),
+          headers: window.API.headers(),
           signal: controller.signal
         });
         clearTimeout(timeoutId);

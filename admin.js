@@ -4,10 +4,10 @@ if (typeof ADMIN_INITIALIZED !== 'undefined') {
 } else {
   window.ADMIN_INITIALIZED = true;
   
-const API = {
+window.API = {
   baseURL() { return (typeof window.API_BASE_URL === 'string' && window.API_BASE_URL) ? window.API_BASE_URL : ''; },
   buildURL(path) { 
-    const base = API.baseURL();
+    const base = window.API.baseURL();
     if (!base) return path; // Use relative path if no base URL is set
     return base + path;
   },
@@ -15,7 +15,7 @@ const API = {
   visitorsURL() { return (typeof window.VISITORS_BASE_URL === 'string' && window.VISITORS_BASE_URL) ? window.VISITORS_BASE_URL : 'https://hollyhubdigitals.vercel.app'; },
   headers(json=true){ 
     const headers = {};
-    const token = API.token();
+    const token = window.API.token();
     console.log('[API.headers] Building headers... token present:', !!token);
     if(token) {
       headers['Authorization'] = 'Bearer ' + token;
@@ -66,7 +66,7 @@ function showToast(message, actionLabel, actionFn, timeout=5000){
 }
 
 function requireAuth() {
-  const token = API.token();
+  const token = window.API.token();
   console.log('[requireAuth] Checking authentication...');
   console.log('[requireAuth] Token present:', !!token);
   if(token) {
@@ -128,7 +128,7 @@ async function loadPageSections(){
       setTimeout(()=>{
         const preview = document.getElementById('pagePreviewArea');
         if(preview){
-          const visitorsUrl = API.visitorsURL();
+          const visitorsUrl = window.API.visitorsURL();
           preview.innerHTML = `<iframe id="pagePreviewFrame" src="${visitorsUrl}/" style="width:100%;height:420px;border:1px solid rgba(255,255,255,0.06);border-radius:8px"></iframe>`;
         }
       }, 50);
@@ -160,7 +160,7 @@ async function loadPageSections(){
 
 async function savePageSections(payload){
   try {
-    const r = await fetch(API.buildURL('/api/pages/sections/save'), { method:'PUT', headers: API.headers(), body: JSON.stringify(payload) });
+    const r = await fetch(window.API.buildURL('/api/pages/sections/save'), { method:'PUT', headers: window.API.headers(), body: JSON.stringify(payload) });
     if(!r.ok) throw new Error(await r.text());
     showToast('Page sections saved', 'View', ()=>window.open('/', '_blank'));
     document.getElementById('pageEditContainer').innerHTML = '<p style="color:var(--primary-accent)">✓ Changes saved!</p>';
@@ -228,7 +228,7 @@ async function publishPortfolio(){
     if(addToRecent){
       try{
         // fetch current sections
-        const sres = await fetch(API.buildURL('/api/pages/sections/index'), { headers: API.headers() });
+        const sres = await fetch(window.API.buildURL('/api/pages/sections/index'), { headers: window.API.headers() });
         const sections = sres.ok ? await sres.json() : {};
         sections.recentProjects = sections.recentProjects || [];
         // create project entry
@@ -267,7 +267,7 @@ async function uploadFile(file, targets){
   if(targets && targets.length) fd.append('targets', targets.filter(Boolean).join(','));
   
   const headers = { 'Authorization': 'Bearer ' + token };
-  const uploadUrl = API.buildURL('/api/upload');
+  const uploadUrl = window.API.buildURL('/api/upload');
   console.log('[uploadFile] Uploading to:', uploadUrl);
   console.log('[uploadFile] Authorization header:', headers.Authorization);
   console.log('[uploadFile] Full header object:', headers);

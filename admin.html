@@ -519,14 +519,14 @@
         const { projectId, userEmail, viewerType } = currentChatSession;
         
         // Route through admin proxy API (avoids CORS/timeouts)
-        const url = API.buildURL(`/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`);
+        const url = window.API.buildURL(`/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`);
         
         // Set a 30 second timeout for the fetch (increased from 10s for reliability)
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
         
         const res = await fetch(url, {
-          headers: API.headers(),
+          headers: window.API.headers(),
           signal: controller.signal
         });
         clearTimeout(timeoutId);
@@ -600,9 +600,9 @@
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
         
-        const res = await fetch(API.buildURL('/api/chat/send'), {
+        const res = await fetch(window.API.buildURL('/api/chat/send'), {
           method: 'POST',
-          headers: API.headers(),
+          headers: window.API.headers(),
           signal: controller.signal,
           body: JSON.stringify({
             projectId: projectId,
@@ -653,11 +653,11 @@
         const messageIds = Array.from(currentChatSession.readMessageIds);
         
         // Route through admin proxy API (avoids CORS/timeouts)
-        const url = API.buildURL('/api/chat/mark-read');
+        const url = window.API.buildURL('/api/chat/mark-read');
 
         const res = await fetch(url, {
           method: 'PUT',
-          headers: API.headers(),
+          headers: window.API.headers(),
           body: JSON.stringify({
             projectId: projectId,
             userEmail: userEmail,
@@ -701,14 +701,14 @@
         if (!projectId || !userEmail) return;
         
         // Use admin proxy to call visitors API (avoids CORS/timeouts)
-        const url = API.buildURL(`/api/chat/unread-count?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`);
+        const url = window.API.buildURL(`/api/chat/unread-count?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`);
 
         // Add timeout to prevent 504 errors
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
 
         const res = await fetch(url, {
-          headers: API.headers(),
+          headers: window.API.headers(),
           signal: controller.signal
         });
         clearTimeout(timeoutId);

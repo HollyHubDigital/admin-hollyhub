@@ -5,10 +5,10 @@ if (typeof ADMIN_INITIALIZED !== 'undefined') {
   window.ADMIN_INITIALIZED = true;
   console.log('[Admin] admin.js loaded - version be61877, timestamp: 2026-04-01T15:30:00Z (badge email fix)');
   
-const API = {
+window.API = {
   baseURL() { return (typeof window.API_BASE_URL === 'string' && window.API_BASE_URL) ? window.API_BASE_URL : ''; },
   buildURL(path) { 
-    const base = API.baseURL();
+    const base = window.API.baseURL();
     if (!base) return path; // Use relative path if no base URL is set
     return base + path;
   },
@@ -16,7 +16,7 @@ const API = {
   visitorsURL() { return (typeof window.VISITORS_BASE_URL === 'string' && window.VISITORS_BASE_URL) ? window.VISITORS_BASE_URL : 'https://hollyhubdigitals.vercel.app'; },
   headers(json=true){ 
     const headers = {};
-    const token = API.token();
+    const token = window.API.token();
     console.log('[API.headers] Building headers... token present:', !!token);
     if(token) {
       headers['Authorization'] = 'Bearer ' + token;
