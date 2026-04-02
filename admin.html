@@ -496,13 +496,17 @@
       chatPollInterval = setInterval(loadChatMessages, 2000);
     }
 
-    function closeChatModal() {
+    async function closeChatModal() {
       if (chatPollInterval) clearInterval(chatPollInterval);
       document.getElementById('chatModal').style.display = 'none';
       
       // Mark messages as read when closing
       if (currentChatSession && currentChatSession.readMessageIds.size > 0) {
-        markMessagesAsRead();
+        try {
+          await markMessagesAsRead();
+        } catch (error) {
+          console.error('Error marking messages as read on close:', error);
+        }
       }
       
       currentChatSession = null;
@@ -513,21 +517,16 @@
 
       try {
         const { projectId, userEmail, viewerType } = currentChatSession;
-        const adminToken = localStorage.getItem('adminToken');
-        // Chat endpoints are on visitors API (which has GITHUB_TOKEN)
-        const visitorsURL = 'https://hollyhubdigitals.vercel.app';
         
-        const headerObj = {};
-        if (adminToken) {
-          headerObj['Authorization'] = `Bearer ${adminToken}`;
-        }
+        // Route through admin proxy API (avoids CORS/timeouts)
+        const url = API.buildURL(`/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`);
         
         // Set a 30 second timeout for the fetch (increased from 10s for reliability)
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
         
-        const res = await fetch(`${visitorsURL}/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`, {
-          headers: headerObj,
+        const res = await fetch(url, {
+          headers: API.headers(),
           signal: controller.signal
         });
         clearTimeout(timeoutId);
@@ -594,24 +593,16 @@
         sendBtn.disabled = true;
         sendBtn.textContent = 'Sending...';
         
-        const { projectId, userEmail, viewerType } = currentChatSession;
+        const { projectId, userEmail } = currentChatSession;
         const adminEmail = localStorage.getItem('adminEmail');
-        const adminToken = localStorage.getItem('adminToken');
-        // Chat endpoints are on visitors API (which has GITHUB_TOKEN)
-        const visitorsURL = 'https://hollyhubdigitals.vercel.app';
         
-        const headerObj = { 'Content-Type': 'application/json' };
-        if (adminToken) {
-          headerObj['Authorization'] = `Bearer ${adminToken}`;
-        }
-        
-        // Set a 30 second timeout (increased from 10s for reliability)
+        // Route through admin proxy API (avoids CORS/timeouts)
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
         
-        const res = await fetch(`${visitorsURL}/api/chat/send`, {
+        const res = await fetch(API.buildURL('/api/chat/send'), {
           method: 'POST',
-          headers: headerObj,
+          headers: API.headers(),
           signal: controller.signal,
           body: JSON.stringify({
             projectId: projectId,
@@ -657,29 +648,36 @@
       if (!currentChatSession || !currentChatSession.readMessageIds || currentChatSession.readMessageIds.size === 0) return;
 
       try {
+        // Capture session data before async operations
         const { projectId, userEmail } = currentChatSession;
-        const adminToken = localStorage.getItem('adminToken');
-        // Chat endpoints are on visitors API (which has GITHUB_TOKEN)
-        const visitorsURL = 'https://hollyhubdigitals.vercel.app';
+        const messageIds = Array.from(currentChatSession.readMessageIds);
         
-        const headerObj = { 'Content-Type': 'application/json' };
-        if (adminToken) {
-          headerObj['Authorization'] = `Bearer ${adminToken}`;
-        }
-        
-        const res = await fetch(`${visitorsURL}/api/chat/mark-read`, {
+        // Route through admin proxy API (avoids CORS/timeouts)
+        const url = API.buildURL('/api/chat/mark-read');
+
+        const res = await fetch(url, {
           method: 'PUT',
-          headers: headerObj,
+          headers: API.headers(),
           body: JSON.stringify({
             projectId: projectId,
             userEmail: userEmail,
-            messageIds: Array.from(currentChatSession.readMessageIds),
+            messageIds: messageIds,
             viewerType: 'admin'
           })
         });
 
         if (res.ok) {
-          currentChatSession.readMessageIds.clear();
+          // Only clear if currentChatSession still exists
+          if (currentChatSession) {
+            currentChatSession.readMessageIds.clear();
+          }
+          console.log('[Badge] Messages marked as read, clearing badge count...');
+          // Refresh badge for this project after marking as read
+          const unreadBadge = document.querySelector(`[data-project-id="${projectId}"]`);
+          if (unreadBadge) {
+            unreadBadge.style.display = 'none';
+            unreadBadge.textContent = '';
+          }
         }
       } catch (error) {
         console.error('Failed to mark messages as read:', error);
