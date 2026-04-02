@@ -519,8 +519,9 @@
       try {
         const { projectId, userEmail, viewerType } = currentChatSession;
         
-        // Route through admin proxy API (avoids CORS/timeouts)
-        const url = window.API.buildURL(`/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`);
+        // Chat endpoints are on visitors API only (not proxied through admin)
+        const visitorsURL = window.API.visitorsURL();
+        const url = `${visitorsURL}/api/chat/messages?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`;
         
         const res = await fetch(url, {
           headers: window.API.headers()
@@ -591,8 +592,9 @@
         
         console.log('[sendChatMessage] Sending payload:', payload);
         
-        // Route through admin proxy API (avoids CORS/timeouts)
-        const res = await fetch(window.API.buildURL('/api/chat/send'), {
+        // Chat endpoints are on visitors API only (not proxied through admin)
+        const visitorsURL = window.API.visitorsURL();
+        const res = await fetch(`${visitorsURL}/api/chat/send`, {
           method: 'POST',
           headers: window.API.headers(),
           body: JSON.stringify(payload)
@@ -616,8 +618,9 @@
         const { projectId, userEmail } = currentChatSession;
         const messageIds = Array.from(currentChatSession.readMessageIds);
         
-        // Route through admin proxy API (avoids CORS/timeouts)
-        const url = window.API.buildURL('/api/chat/send');
+        // Chat endpoints are on visitors API only (not proxied through admin)
+        const visitorsURL = window.API.visitorsURL();
+        const url = `${visitorsURL}/api/chat/mark-read`;
 
         const res = await fetch(url, {
           method: 'POST',
@@ -664,8 +667,9 @@
         userEmail = normalizeProjectEmail(userEmail);
         if (!projectId || !userEmail) return;
         
-        // Route through admin proxy API (avoids CORS/timeouts)
-        const url = window.API.buildURL(`/api/chat/unread-count?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`);
+        // Chat endpoints are on visitors API only (not proxied through admin)
+        const visitorsURL = window.API.visitorsURL();
+        const url = `${visitorsURL}/api/chat/unread-count?projectId=${encodeURIComponent(projectId)}&userEmail=${encodeURIComponent(userEmail)}&viewerType=admin`;
         
         // Add timeout to prevent 504 errors
         const controller = new AbortController();
